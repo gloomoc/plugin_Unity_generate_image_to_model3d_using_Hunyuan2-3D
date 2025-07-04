@@ -95,12 +95,12 @@ namespace Hunyuan3D.Editor
         
         private void DrawHeader()
         {
-            EditorGUILayout.LabelField("🎯 Benvingut a Hunyuan3D Unity Plugin", titleStyle);
+            EditorGUILayout.LabelField("🎯 Welcome to Hunyuan3D Unity Plugin", titleStyle);
             EditorGUILayout.Space(10);
             
             EditorGUILayout.LabelField(
-                "Aquest plugin et permet generar models 3D a partir d'imatges utilitzant " +
-                "la potent IA Hunyuan3D-2 de Tencent, directament des de Unity.",
+                "This plugin allows you to generate 3D models from images using " +
+                "Tencent's powerful Hunyuan3D-2 AI, directly from Unity.",
                 stepStyle
             );
             
@@ -110,26 +110,26 @@ namespace Hunyuan3D.Editor
             using (new EditorGUILayout.HorizontalScope())
             {
                 GUILayout.FlexibleSpace();
-                EditorGUILayout.LabelField("⭐ 10.5k GitHub Stars | 🍴 947 Forks | 📅 Actualitzat 2025", stepStyle);
+                EditorGUILayout.LabelField("⭐ 10.5k GitHub Stars | 🍴 947 Forks | 📅 Updated 2025", stepStyle);
                 GUILayout.FlexibleSpace();
             }
         }
         
         private void DrawQuickStart()
         {
-            EditorGUILayout.LabelField("🚀 Inici Ràpid", subtitleStyle);
+            EditorGUILayout.LabelField("🚀 Quick Start", subtitleStyle);
             
             EditorGUILayout.HelpBox(
-                "Per començar ràpidament, segueix aquests 3 passos:",
+                "To get started quickly, follow these 3 steps:",
                 MessageType.Info
             );
             
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField("1️⃣ <b>Instal·la Dependències</b>", stepStyle);
+                EditorGUILayout.LabelField("1️⃣ <b>Install Dependencies</b>", stepStyle);
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorGUILayout.LabelField("   Obre el gestor automàtic de dependències:", stepStyle);
+                    EditorGUILayout.LabelField("   Open the automatic dependency manager:", stepStyle);
                     if (GUILayout.Button("Dependency Manager", GUILayout.Width(150)))
                     {
                         Hunyuan3DDependencyManager.ShowWindow();
@@ -138,15 +138,15 @@ namespace Hunyuan3D.Editor
                 
                 EditorGUILayout.Space(5);
                 
-                EditorGUILayout.LabelField("2️⃣ <b>Configura Scripts</b>", stepStyle);
-                EditorGUILayout.LabelField("   Col·loca batch_hunyuan3d.py i remove_background.py al directori del projecte", stepStyle);
+                EditorGUILayout.LabelField("2️⃣ <b>Configure Scripts</b>", stepStyle);
+                EditorGUILayout.LabelField("   Place batch_hunyuan3d.py and remove_background.py in the project directory", stepStyle);
                 
                 EditorGUILayout.Space(5);
                 
-                EditorGUILayout.LabelField("3️⃣ <b>Comença a Generar</b>", stepStyle);
+                EditorGUILayout.LabelField("3️⃣ <b>Start Generating</b>", stepStyle);
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorGUILayout.LabelField("   Obre el generador principal:", stepStyle);
+                    EditorGUILayout.LabelField("   Open the main generator:", stepStyle);
                     if (GUILayout.Button("3D Model Generator", GUILayout.Width(150)))
                     {
                         Hunyuan3DGenerator.ShowWindow();
@@ -157,7 +157,7 @@ namespace Hunyuan3D.Editor
         
         private void DrawInstallationSteps()
         {
-            EditorGUILayout.LabelField("📋 Guia Detallada d'Instal·lació", subtitleStyle);
+            EditorGUILayout.LabelField("📋 Detailed Installation Guide", subtitleStyle);
             
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
