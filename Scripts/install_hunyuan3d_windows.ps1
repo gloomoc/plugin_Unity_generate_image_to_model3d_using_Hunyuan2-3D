@@ -220,6 +220,7 @@ bpy
 ipywidgets
 ipython
 setuptools
+triton-windows==3.2.0.post11
 "@
 
 $requirementsContent | Out-File -FilePath "requirements-uv.txt" -Encoding UTF8
@@ -244,9 +245,9 @@ try {
             
             try {
                 if ($UseCUDA12) {
-                    & $uvPath pip install triton --index-url https://download.pytorch.org/whl/cu124
+                    & $uvPath pip install triton-windows --index-url https://download.pytorch.org/whl/cu124
                 } else {
-                    & $uvPath pip install triton --index-url https://download.pytorch.org/whl/cu118
+                    & $uvPath pip install triton-windows --index-url https://download.pytorch.org/whl/cu118
                 }
                 Write-Success "✓ Triton instal·lat (suport per --compile)"
             }

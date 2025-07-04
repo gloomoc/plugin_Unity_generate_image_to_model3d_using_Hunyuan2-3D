@@ -134,7 +134,7 @@ namespace Hunyuan3D.Editor
             "einops",
             "ninja",
             "pybind11",
-            "triton"
+            "triton-windows"
         };
 
         private readonly string[] optionalDependencies = {

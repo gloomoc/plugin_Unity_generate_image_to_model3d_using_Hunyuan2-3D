@@ -10,6 +10,8 @@ import shutil
 from pathlib import Path
 from glob import glob
 import torch
+import torch._dynamo
+torch._dynamo.config.suppress_errors = True
 import trimesh
 from PIL import Image
 from tqdm import tqdm

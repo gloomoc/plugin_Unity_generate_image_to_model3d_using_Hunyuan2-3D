@@ -43,7 +43,7 @@ namespace Hunyuan3D.Editor
         {
             var window = GetWindow<Hunyuan3DGenerator>("Hunyuan3D Generator");
             window.minSize = new Vector2(500, 500);
-            window.maxSize = new Vector2(800, 800);
+            window.maxSize = new Vector2(800, 1024);
             window.Initialize();
         }
         
