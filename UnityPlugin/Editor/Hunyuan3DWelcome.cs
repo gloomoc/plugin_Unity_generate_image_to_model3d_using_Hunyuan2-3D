@@ -18,7 +18,7 @@ namespace Hunyuan3D.Editor
         
         private const string SHOW_ON_STARTUP_KEY = "Hunyuan3D_ShowWelcomeOnStartup";
         
-        [MenuItem("Tools/Hunyuan3D/Welcome & Setup Guide")]
+        // [MenuItem("Tools/Hunyuan3D/Welcome & Setup Guide")] // Removed as requested
         public static void ShowWindow()
         {
             var window = GetWindow<Hunyuan3DWelcome>("Hunyuan3D Welcome");

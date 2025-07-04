@@ -10,7 +10,7 @@ namespace Hunyuan3D.Editor
     /// </summary>
     public class Hunyuan3DExample : EditorWindow
     {
-        [MenuItem("Tools/Hunyuan3D/Example Usage")]
+        // [MenuItem("Tools/Hunyuan3D/Example Usage")] // Removed as requested
         public static void ShowExampleWindow()
         {
             var window = GetWindow<Hunyuan3DExample>("Hunyuan3D Example");
@@ -152,7 +152,7 @@ namespace Hunyuan3D.Editor
         /// Processa automàticament totes les imatges d'una carpeta
         /// Exemple d'ús des d'altres scripts
         /// </summary>
-        [MenuItem("Tools/Hunyuan3D/Auto Process Selected Folder")]
+        // [MenuItem("Tools/Hunyuan3D/Auto Process Selected Folder")] // Removed as requested
         public static void AutoProcessSelectedFolder()
         {
             string folderPath = EditorUtility.OpenFolderPanel("Seleccionar carpeta d'imatges", "", "");
@@ -194,7 +194,7 @@ namespace Hunyuan3D.Editor
         /// <summary>
         /// Neteja fitxers temporals generats pel plugin
         /// </summary>
-        [MenuItem("Tools/Hunyuan3D/Clean Temp Files")]
+        // [MenuItem("Tools/Hunyuan3D/Clean Temp Files")] // Removed as requested
         public static void CleanTempFiles()
         {
             string tempPath = Path.GetTempPath();
@@ -221,7 +221,7 @@ namespace Hunyuan3D.Editor
         /// <summary>
         /// Valida la configuració actual
         /// </summary>
-        [MenuItem("Tools/Hunyuan3D/Validate Configuration")]
+        // [MenuItem("Tools/Hunyuan3D/Validate Configuration")] // Removed as requested
         public static void ValidateConfiguration()
         {
             var config = Hunyuan3DConfig.Load();
@@ -242,7 +242,7 @@ namespace Hunyuan3D.Editor
         /// <summary>
         /// Obre la carpeta de configuració
         /// </summary>
-        [MenuItem("Tools/Hunyuan3D/Open Config Folder")]
+        // [MenuItem("Tools/Hunyuan3D/Open Config Folder")] // Removed as requested
         public static void OpenConfigFolder()
         {
             string configPath = Path.Combine(

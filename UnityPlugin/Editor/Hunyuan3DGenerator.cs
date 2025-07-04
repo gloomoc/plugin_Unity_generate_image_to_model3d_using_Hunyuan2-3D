@@ -42,7 +42,8 @@ namespace Hunyuan3D.Editor
         public static void ShowWindow()
         {
             var window = GetWindow<Hunyuan3DGenerator>("Hunyuan3D Generator");
-            window.minSize = new Vector2(500, 700);
+            window.minSize = new Vector2(500, 500);
+            window.maxSize = new Vector2(800, 800);
             window.Initialize();
         }
         
@@ -360,8 +361,10 @@ namespace Hunyuan3D.Editor
                 padding = new RectOffset(5, 5, 5, 5)
             };
 
-            // ScrollView per als logs
-            scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.Height(400));
+            // ScrollView per als logs with dynamic height
+            float availableHeight = position.height - 450; // Account for other UI elements
+            float logHeight = Mathf.Clamp(availableHeight, 150, 300); // Min 150, max 300
+            scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.Height(logHeight));
 
             // Capturar focus per permetre Ctrl+C
             GUI.SetNextControlName("LogTextArea");
