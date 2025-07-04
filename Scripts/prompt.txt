@@ -1,0 +1,40 @@
+Fes-me un script d’editor per Unity (en C#) que permeti executar un script Python extern (batch_hunyuan3d.py, remove_background.py), (que es un model de IA que converteix una imatge en una malla 3D amb format .obj o .fbx "preferentment").
+Et deixo els scripts de python existents a l'arrel del projecte.
+El nou projecte  hauria d'estar a la mateixa carpeta, pero dins una subcarpeta.
+Hauries d'interpretar el fitxer batch_hunyuan3d.py per saber com funciona y utilitzarlo en el plugin unity.
+
+El plugin ha de fer:
+
+Mostrar una finestra d’editor (EditorWindow) amb:
+
+Un camp per seleccionar una imatge d’entrada (.jpg o .png).
+
+Un camp per escollir la carpeta de sortida (dins Assets).
+
+Un botó per executar el procés.
+
+Varios parametres de configuracio de la conversio de imatge a model 3d que trobaras al script batch_hunyuan3d.py
+
+Quan es premi el botó, el plugin ha de:
+
+Executar el script Python seleccionat passant-li com paràmetre la imatge d’entrada i la carpeta de sortida.
+
+Esperar que el script acabi (sincron o async).
+
+Detectar el nou fitxer .obj o .fbx generat a la carpeta.
+
+Importar automàticament el model generat com asset a Unity (AssetDatabase.ImportAsset).
+
+(Opcional) Mostrar un missatge de confirmació o error.
+
+Pots fer servir System.Diagnostics.Process per executar el Python.
+El plugin ha de funcionar a l’editor de Unity, no cal en runtime.
+Si pots, afegeix comentaris al codi i mostra exemples de com passar arguments al script Python.
+
+Mostra una “barra de progrés” o un text d’estat mentre es genera el model.
+
+Afegeix la possibilitat de llançar el script sobre una carpeta sencera d’imatges per processar-les en batch.
+
+Detecta el nom de l’asset generat i el selecciona a l’Inspector un cop importat.
+
+Posar el nom de l'asset el mateix que el de la imatge.

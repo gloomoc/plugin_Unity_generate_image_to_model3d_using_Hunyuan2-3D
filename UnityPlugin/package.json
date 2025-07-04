@@ -1,0 +1,28 @@
+{
+  "name": "com.hunyuan3d.unity-plugin",
+  "version": "1.0.0",
+  "displayName": "Hunyuan3D Unity Plugin",
+  "description": "Plugin d'Unity per generar models 3D a partir d'imatges utilitzant Hunyuan3D-2 AI",
+  "unity": "2020.3",
+  "keywords": [
+    "3d",
+    "ai",
+    "image-to-3d",
+    "hunyuan3d",
+    "model-generation",
+    "python-integration"
+  ],
+  "author": {
+    "name": "Hunyuan3D Unity Plugin",
+    "email": ""
+  },
+  "hideInEditor": false,
+  "dependencies": {},
+  "samples": [
+    {
+      "displayName": "Basic Usage Examples",
+      "description": "Exemples bàsics d'ús del plugin",
+      "path": "Samples~/BasicExamples"
+    }
+  ]
+}

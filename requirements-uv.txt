@@ -1,0 +1,50 @@
+# Hunyuan3D-2 Requirements for UV package manager
+# Optimized for Windows installation
+
+# Core ML dependencies
+torch==2.5.1+cu124  # Will be overridden by index URL
+torchvision
+torchaudio
+diffusers>=0.21.0
+transformers>=4.25.0
+accelerate>=0.24.0
+safetensors>=0.4.0
+
+# Image processing
+opencv-python>=4.8.0
+pillow>=9.5.0
+rembg[gpu]>=2.0.50
+onnxruntime-gpu>=1.16.0
+
+# 3D processing and visualization  
+trimesh[easy]>=3.15.0
+pymeshlab>=2022.2
+pygltflib>=1.16.0
+xatlas>=0.0.7
+ninja>=1.11.0
+pybind11>=2.11.0
+
+# Math and utilities
+numpy<2.0.0  # Compatibility
+scipy>=1.11.0
+einops>=0.7.0
+omegaconf>=2.3.0
+tqdm>=4.66.0
+
+# Web interface (optional but recommended)
+gradio>=4.0.0
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# Development tools
+ipywidgets>=8.1.0
+ipython>=8.17.0
+jupyterlab>=4.0.0
+
+# Windows specific optimizations
+pywin32>=306; sys_platform == 'win32'
+
+# HuggingFace ecosystem
+huggingface-hub>=0.19.0
+datasets>=2.15.0
+tokenizers>=0.15.0
