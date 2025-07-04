@@ -10,34 +10,34 @@ using UnityEngine;
 namespace Hunyuan3D.Editor
 {
     /// <summary>
-    /// Plugin d'Unity per generar models 3D a partir d'imatges utilitzant Hunyuan3D-2
-    /// Integra els scripts de Python batch_hunyuan3d.py i remove_background.py
+    /// Unity plugin to generate 3D models from images using Hunyuan3D-2
+    /// Integrates Python scripts batch_hunyuan3d.py and remove_background.py
     /// </summary>
     public class Hunyuan3DGenerator : EditorWindow
     {
-        #region Variables de la UI
+        #region UI Variables
         private string selectedImagePath = "";
         private string outputFolder = "Assets/Generated3DModels";
         private bool batchMode = false;
         
-        // Configuració persistent
+        // Persistent configuration
         private Hunyuan3DConfig config;
         
-        // Control d'estat
+        // State control
         private bool isProcessing = false;
         private string statusMessage = "";
         private float progress = 0f;
         private List<string> logMessages = new List<string>();
         
-        // Scroll per logs
+        // Scroll for logs
         private Vector2 scrollPosition = Vector2.zero;
         
-        // Opcions de tipus de fitxer
+        // File type options
         private readonly string[] fileTypeOptions = { "obj", "fbx", "glb", "ply", "stl" };
         private readonly string[] deviceOptions = { "cuda", "cpu", "mps" };
         #endregion
 
-        #region Menú Unity
+        #region Unity Menu
         [MenuItem("Tools/Hunyuan3D/3D Model Generator")]
         public static void ShowWindow()
         {
@@ -54,19 +54,19 @@ namespace Hunyuan3D.Editor
         }
         #endregion
 
-        #region Inicialització
+        #region Initialization
         private void Initialize()
         {
-            // Carregar configuració persistent
+            // Load persistent configuration
             config = Hunyuan3DConfig.Load();
             
-            // Intentar detectar automàticament el path dels scripts si no està configurat
+            // Try to automatically detect script path if not configured
             if (string.IsNullOrEmpty(config.scriptBasePath))
             {
                 string currentPath = Application.dataPath;
                 string projectRoot = Directory.GetParent(currentPath).FullName;
                 
-                // Buscar els scripts en el directori pare o en directoris relacionats
+                // Search for scripts in parent directory or related directories
                 string[] possiblePaths = {
                     Path.Combine(projectRoot, "batch_hunyuan3d.py"),
                     Path.Combine(projectRoot, "Scripts", "batch_hunyuan3d.py"),
@@ -79,8 +79,8 @@ namespace Hunyuan3D.Editor
                     if (File.Exists(path))
                     {
                         config.scriptBasePath = Path.GetDirectoryName(path);
-                        AddLogMessage($"Scripts trobats a: {config.scriptBasePath}");
-                        config.Save(); // Guardar la configuració actualitzada
+                        AddLogMessage($"Scripts found at: {config.scriptBasePath}");
+                        config.Save(); // Save updated configuration
                         break;
                     }
                 }
@@ -88,11 +88,11 @@ namespace Hunyuan3D.Editor
             
             if (string.IsNullOrEmpty(config.scriptBasePath))
             {
-                AddLogMessage("Advertència: No s'han trobat els scripts de Python automàticament.");
-                AddLogMessage("Si us plau, especifica el path manualment a la configuració.");
+                AddLogMessage("Warning: Python scripts not found automatically.");
+                AddLogMessage("Please specify the path manually in configuration.");
             }
             
-            // Crear carpeta de sortida si no existeix
+            // Create output folder if it doesn't exist
             if (!Directory.Exists(outputFolder))
             {
                 Directory.CreateDirectory(outputFolder);
@@ -131,10 +131,10 @@ namespace Hunyuan3D.Editor
 
         private void DrawPathConfiguration()
         {
-            EditorGUILayout.LabelField("Configuració de Paths", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Path Configuration", EditorStyles.boldLabel);
 
             // Botó per detectar instal·lació del PowerShell
-            if (GUILayout.Button("🔍 Detectar Instal·lació PowerShell", GUILayout.Height(25)))
+            if (GUILayout.Button("🔍 Detect PowerShell Installation", GUILayout.Height(25)))
             {
                 string powerShellPath = @"C:\Users\" + Environment.UserName + @"\AppData\Local\Temp\Hunyuan2-3D-for-windows";
                 if (Directory.Exists(powerShellPath))
@@ -180,7 +180,7 @@ namespace Hunyuan3D.Editor
             config.pythonExecutablePath = EditorGUILayout.TextField("Python Executable:", config.pythonExecutablePath);
             if (GUILayout.Button("...", GUILayout.Width(30)))
             {
-                string path = EditorUtility.OpenFilePanel("Seleccionar Python", "", "exe");
+                string path = EditorUtility.OpenFilePanel("Select Python", "", "exe");
                 if (!string.IsNullOrEmpty(path))
                 {
                     config.pythonExecutablePath = path;
@@ -192,14 +192,14 @@ namespace Hunyuan3D.Editor
             // Mostrar si estem usant un venv
             if (config.pythonExecutablePath.Contains(".venv"))
             {
-                EditorGUILayout.HelpBox("✅ Usant Python d'un entorn virtual", MessageType.Info);
+                EditorGUILayout.HelpBox("✅ Using Python from virtual environment", MessageType.Info);
             }
             
             EditorGUILayout.BeginHorizontal();
             config.scriptBasePath = EditorGUILayout.TextField("Script Base Path:", config.scriptBasePath);
             if (GUILayout.Button("...", GUILayout.Width(30)))
             {
-                string path = EditorUtility.OpenFolderPanel("Seleccionar carpeta dels scripts", "", "");
+                string path = EditorUtility.OpenFolderPanel("Select scripts folder", "", "");
                 if (!string.IsNullOrEmpty(path))
                 {
                     config.scriptBasePath = path;
@@ -221,7 +221,7 @@ namespace Hunyuan3D.Editor
             }
             
             // Botó per guardar configuració
-            if (GUILayout.Button("Guardar Configuració"))
+            if (GUILayout.Button("Save Configuration"))
             {
                 config.Save();
                 AddLogMessage("✓ Configuració guardada.");
@@ -230,27 +230,27 @@ namespace Hunyuan3D.Editor
 
         private void DrawInputSelection()
         {
-            EditorGUILayout.LabelField("Selecció d'Entrada", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Input Selection", EditorStyles.boldLabel);
             
             batchMode = EditorGUILayout.Toggle("Mode Batch (carpeta)", batchMode);
             
             EditorGUILayout.BeginHorizontal();
             if (batchMode)
             {
-                selectedImagePath = EditorGUILayout.TextField("Carpeta d'imatges:", selectedImagePath);
+                selectedImagePath = EditorGUILayout.TextField("Image folder:", selectedImagePath);
                 if (GUILayout.Button("...", GUILayout.Width(30)))
                 {
-                    string path = EditorUtility.OpenFolderPanel("Seleccionar carpeta d'imatges", "", "");
+                    string path = EditorUtility.OpenFolderPanel("Select image folder", "", "");
                     if (!string.IsNullOrEmpty(path))
                         selectedImagePath = path;
                 }
             }
             else
             {
-                selectedImagePath = EditorGUILayout.TextField("Imatge:", selectedImagePath);
+                selectedImagePath = EditorGUILayout.TextField("Image:", selectedImagePath);
                 if (GUILayout.Button("...", GUILayout.Width(30)))
                 {
-                    string path = EditorUtility.OpenFilePanel("Seleccionar imatge", "", "jpg,jpeg,png,bmp,webp,tiff");
+                    string path = EditorUtility.OpenFilePanel("Select image", "", "jpg,jpeg,png,bmp,webp,tiff");
                     if (!string.IsNullOrEmpty(path))
                         selectedImagePath = path;
                 }
@@ -258,10 +258,10 @@ namespace Hunyuan3D.Editor
             EditorGUILayout.EndHorizontal();
             
             EditorGUILayout.BeginHorizontal();
-            outputFolder = EditorGUILayout.TextField("Carpeta de sortida:", outputFolder);
+            outputFolder = EditorGUILayout.TextField("Output folder:", outputFolder);
             if (GUILayout.Button("...", GUILayout.Width(30)))
             {
-                string path = EditorUtility.OpenFolderPanel("Seleccionar carpeta de sortida", "Assets", "");
+                string path = EditorUtility.OpenFolderPanel("Select output folder", "Assets", "");
                 if (!string.IsNullOrEmpty(path) && path.StartsWith(Application.dataPath))
                 {
                     outputFolder = "Assets" + path.Substring(Application.dataPath.Length);
@@ -272,7 +272,7 @@ namespace Hunyuan3D.Editor
 
         private void DrawModelParameters()
         {
-            EditorGUILayout.LabelField("Paràmetres del Model", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Model Parameters", EditorStyles.boldLabel);
             
             config.modelPath = EditorGUILayout.TextField("Model Path:", config.modelPath);
             config.subfolder = EditorGUILayout.TextField("Subfolder:", config.subfolder);
@@ -288,7 +288,7 @@ namespace Hunyuan3D.Editor
 
         private void DrawGenerationParameters()
         {
-            EditorGUILayout.LabelField("Paràmetres de Generació", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Generation Parameters", EditorStyles.boldLabel);
             
             config.steps = EditorGUILayout.IntSlider("Steps:", config.steps, 1, 100);
             config.guidanceScale = EditorGUILayout.Slider("Guidance Scale:", config.guidanceScale, 1f, 20f);
@@ -304,7 +304,7 @@ namespace Hunyuan3D.Editor
 
         private void DrawOptions()
         {
-            EditorGUILayout.LabelField("Opcions", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Options", EditorStyles.boldLabel);
             
             EditorGUILayout.BeginHorizontal();
             config.enableT23D = EditorGUILayout.Toggle("Enable Text-to-3D", config.enableT23D);
@@ -324,10 +324,10 @@ namespace Hunyuan3D.Editor
 
         private void DrawProcessingControls()
         {
-            EditorGUILayout.LabelField("Control de Processament", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Processing Control", EditorStyles.boldLabel);
             
             EditorGUI.BeginDisabledGroup(isProcessing);
-            if (GUILayout.Button(batchMode ? "Processar Carpeta" : "Generar Model 3D", GUILayout.Height(30)))
+            if (GUILayout.Button(batchMode ? "Process Folder" : "Generate 3D Model", GUILayout.Height(30)))
             {
                 if (ValidateInputs())
                 {
@@ -339,7 +339,7 @@ namespace Hunyuan3D.Editor
             if (isProcessing)
             {
                 EditorGUILayout.Space(5);
-                EditorGUILayout.LabelField("Estat:", statusMessage);
+                EditorGUILayout.LabelField("Status:", statusMessage);
                 EditorGUILayout.Space(2);
                 EditorGUI.ProgressBar(EditorGUILayout.GetControlRect(), progress, $"{(progress * 100):F1}%");
             }
@@ -347,7 +347,7 @@ namespace Hunyuan3D.Editor
 
         private void DrawProgressAndLogs()
         {
-            EditorGUILayout.LabelField("Logs d'Instal·lació", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Installation Logs", EditorStyles.boldLabel);
 
             // Convertir els missatges de log a un string únic
             string logContent = string.Join("\n", logMessages);
@@ -387,20 +387,20 @@ namespace Hunyuan3D.Editor
             EditorGUILayout.EndScrollView();
 
             // Informació sobre la funcionalitat
-            EditorGUILayout.HelpBox("Pots seleccionar text del log i copiar-lo amb Ctrl+C", MessageType.Info);
+            EditorGUILayout.HelpBox("You can select text from the log and copy it with Ctrl+C", MessageType.Info);
 
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Netejar Logs"))
+            if (GUILayout.Button("Clear Logs"))
             {
                 logMessages.Clear();
             }
-            if (GUILayout.Button("Copiar Tots els Logs"))
+            if (GUILayout.Button("Copy All Logs"))
             {
                 CopyLogsToClipboard();
             }
 
             // Botó addicional per copiar la selecció actual
-            if (GUILayout.Button("Copiar Selecció"))
+            if (GUILayout.Button("Copy Selection"))
             {
                 TextEditor textEditor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
                 if (textEditor != null && textEditor.hasSelection)
@@ -463,7 +463,7 @@ namespace Hunyuan3D.Editor
         {
             isProcessing = true;
             progress = 0f;
-            statusMessage = "Iniciant processament...";
+            statusMessage = "Starting processing...";
 
             try
             {
@@ -495,7 +495,7 @@ namespace Hunyuan3D.Editor
                 if (config.removeBackground && !batchMode)
                 {
                     progress = 0.1f;
-                    statusMessage = "Eliminant fons de la imatge...";
+                    statusMessage = "Removing image background...";
                     processedImagePath = await PreprocessImage(selectedImagePath);
                     if (string.IsNullOrEmpty(processedImagePath))
                     {
@@ -504,16 +504,16 @@ namespace Hunyuan3D.Editor
                     }
                 }
 
-                // Executar batch_hunyuan3d.py
+                // Execute batch_hunyuan3d.py
                 progress = 0.3f;
-                statusMessage = "Generant model 3D...";
+                statusMessage = "Generating 3D model...";
 
                 bool success = await ExecuteHunyuan3DScript(processedImagePath, absoluteOutputPath);
 
                 if (success)
                 {
                     progress = 0.9f;
-                    statusMessage = "Important assets a Unity...";
+                    statusMessage = "Importing assets to Unity...";
 
                     // Importar els nous assets
                     AssetDatabase.Refresh();
@@ -522,7 +522,7 @@ namespace Hunyuan3D.Editor
                     await SelectGeneratedModels(absoluteOutputPath);
 
                     progress = 1f;
-                    statusMessage = "Processament completat!";
+                    statusMessage = "Processing completed!";
                     AddLogMessage("✓ Processament completat amb èxit!");
                 }
                 else
@@ -932,75 +932,75 @@ namespace Hunyuan3D.Editor
 
         private void UpdateStatusFromOutput(string output)
         {
-            // Actualitzar el missatge d'estat basat en el output del script Python
+            // Update status message based on Python script output
             if (output.Contains("Verificant dependències"))
             {
-                statusMessage = "Verificant dependències FBX...";
+                statusMessage = "Verifying FBX dependencies...";
                 progress = 0.35f;
             }
             else if (output.Contains("Inicialitzant Hunyuan3D"))
             {
-                statusMessage = "Inicialitzant Hunyuan3D...";
+                statusMessage = "Initializing Hunyuan3D...";
                 progress = 0.4f;
             }
             else if (output.Contains("Carregant Background Remover"))
             {
-                statusMessage = "Carregant Background Remover...";
+                statusMessage = "Loading Background Remover...";
                 progress = 0.45f;
             }
             else if (output.Contains("Carregant pipeline de generació 3D"))
             {
-                statusMessage = "Carregant model 3D...";
+                statusMessage = "Loading 3D model...";
                 progress = 0.5f;
             }
             else if (output.Contains("Models carregats correctament"))
             {
-                statusMessage = "Models carregats!";
+                statusMessage = "Models loaded!";
                 progress = 0.55f;
             }
             else if (output.Contains("Carregant imatge"))
             {
-                statusMessage = "Processant imatge...";
+                statusMessage = "Processing image...";
                 progress = 0.6f;
             }
             else if (output.Contains("Generant forma 3D"))
             {
-                statusMessage = "Generant model 3D...";
+                statusMessage = "Generating 3D model...";
                 progress = 0.7f;
             }
             else if (output.Contains("Post-processament"))
             {
-                statusMessage = "Post-processant model...";
+                statusMessage = "Post-processing model...";
                 progress = 0.8f;
             }
             else if (output.Contains("Generant textura"))
             {
-                statusMessage = "Generant textures...";
+                statusMessage = "Generating textures...";
                 progress = 0.85f;
             }
             else if (output.Contains("Generant preview"))
             {
-                statusMessage = "Generant previews...";
+                statusMessage = "Generating previews...";
                 progress = 0.9f;
             }
             else if (output.Contains("Completat en"))
             {
-                statusMessage = "Completat!";
+                statusMessage = "Completed!";
                 progress = 0.95f;
             }
             else if (output.Contains("✓"))
             {
-                // Missatges d'èxit genèrics
-                statusMessage = "Processant...";
+                // Generic success messages
+                statusMessage = "Processing...";
                 if (progress < 0.9f) progress += 0.05f;
             }
             else if (output.Contains("Error") || output.Contains("✗"))
             {
                 // Errors
-                statusMessage = "Error detectat!";
+                statusMessage = "Error detected!";
             }
 
-            // Forçar actualització de la UI
+            // Force UI update
             Repaint();
         }
 
