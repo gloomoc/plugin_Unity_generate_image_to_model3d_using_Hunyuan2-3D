@@ -175,10 +175,10 @@ Check "❌ Error instal·lant PyTorch"
 Write-Success "✓ PyTorch instal·lat"
 
 # Clonar repositori Hunyuan3D-2 si no existeix
-$repoPath = "Hunyuan3D-2"
+$repoPath = "Hunyuan2-3D-for-windows"
 if (-not (Test-Path $repoPath)) {
-    Write-Info "📥 Clonant repositori Hunyuan3D-2..."
-    git clone --depth 1 https://github.com/Tencent-Hunyuan/Hunyuan3D-2.git $repoPath
+    Write-Info "📥 Clonant repositori Hunyuan3D-2 for windows..."
+    git clone --depth 1 https://github.com/sdbds/Hunyuan3D-2-for-windows.git $repoPath
     Check "❌ Error clonant repositori"
     Write-Success "✓ Repositori clonat"
 } else {
