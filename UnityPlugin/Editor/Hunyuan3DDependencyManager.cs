@@ -72,8 +72,8 @@ namespace Hunyuan3D.Editor
         }
     }
     /// <summary>
-    /// Pantalla d'instal·lació i gestió de dependències per Hunyuan3D
-    /// Integra la instal·lació automàtica segons la documentació oficial
+    /// Installation and dependency management screen for Hunyuan3D
+    /// Integrates automatic installation according to official documentation
     /// </summary>
     public class Hunyuan3DDependencyManager : EditorWindow
     {
@@ -261,11 +261,11 @@ namespace Hunyuan3D.Editor
 
         private void DrawConfigurationSection()
         {
-            EditorGUILayout.LabelField("Configuració", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Configuration", EditorStyles.boldLabel);
 
             EditorGUILayout.BeginHorizontal();
             pythonPath = EditorGUILayout.TextField("Python Path:", pythonPath);
-            if (GUILayout.Button("Detectar", GUILayout.Width(70)))
+            if (GUILayout.Button("Detect", GUILayout.Width(70)))
             {
                 DetectPythonPath();
             }
@@ -316,7 +316,7 @@ namespace Hunyuan3D.Editor
             }
             else if (nvccAvailable)
             {
-                EditorGUILayout.LabelField("CUDA Toolkit: Detectat via nvcc");
+                EditorGUILayout.LabelField("CUDA Toolkit: Detected via nvcc");
             }
 
             if (!string.IsNullOrEmpty(recommendedCudaVersion))
@@ -327,7 +327,7 @@ namespace Hunyuan3D.Editor
 
         private void DrawInstallationModeSection()
         {
-            EditorGUILayout.LabelField("Mode d'Instal·lació", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Installation Mode", EditorStyles.boldLabel);
 
             selectedInstallMode = (InstallationMode)EditorGUILayout.EnumPopup("Mode:", selectedInstallMode);
 
@@ -350,19 +350,19 @@ namespace Hunyuan3D.Editor
 
         private void DrawActionButtons()
         {
-            EditorGUILayout.LabelField("Accions", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Actions", EditorStyles.boldLabel);
 
             EditorGUILayout.BeginHorizontal();
 
             EditorGUI.BeginDisabledGroup(isCheckingDependencies || isInstalling);
-            if (GUILayout.Button("Comprovar Dependències", GUILayout.Height(30)))
+            if (GUILayout.Button("Check Dependencies", GUILayout.Height(30)))
             {
                 _ = CheckAllDependencies();
             }
             EditorGUI.EndDisabledGroup();
 
             EditorGUI.BeginDisabledGroup(isCheckingDependencies || isInstalling);
-            if (GUILayout.Button("Instal·lar Tot", GUILayout.Height(30)))
+            if (GUILayout.Button("Install All", GUILayout.Height(30)))
             {
                 _ = InstallAllDependencies();
             }
@@ -374,15 +374,15 @@ namespace Hunyuan3D.Editor
             if (Application.platform == RuntimePlatform.WindowsEditor)
             {
                 EditorGUILayout.Space(5);
-                EditorGUILayout.LabelField("Instal·lació Optimitzada Windows", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("Optimized Windows Installation", EditorStyles.boldLabel);
 
                 EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("🚀 Instal·lació Ràpida Windows", GUILayout.Height(35)))
+                if (GUILayout.Button("🚀 Windows Quick Install", GUILayout.Height(35)))
                 {
                     RunWindowsPowerShellInstaller();
                 }
 
-                if (GUILayout.Button("📖 Guia", GUILayout.Width(60), GUILayout.Height(35)))
+                if (GUILayout.Button("📖 Guide", GUILayout.Width(60), GUILayout.Height(35)))
                 {
                     ShowWindowsInstallGuide();
                 }
@@ -396,12 +396,12 @@ namespace Hunyuan3D.Editor
 
             EditorGUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("Crear Environment Conda", GUILayout.Height(25)))
+            if (GUILayout.Button("Create Conda Environment", GUILayout.Height(25)))
             {
                 _ = CreateCondaEnvironment();
             }
 
-            if (GUILayout.Button("Instal·lar Hunyuan3D Package", GUILayout.Height(25)))
+            if (GUILayout.Button("Install Hunyuan3D Package", GUILayout.Height(25)))
             {
                 // Oferir opcions d'instal·lació millorades per Windows
                 int choice = EditorUtility.DisplayDialogComplex(
@@ -433,11 +433,11 @@ namespace Hunyuan3D.Editor
             EditorGUILayout.EndHorizontal();
 
             // Botons específics per CUDA i PyTorch
-            EditorGUILayout.LabelField("Instal·lació CUDA i PyTorch", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("CUDA and PyTorch Installation", EditorStyles.boldLabel);
             EditorGUILayout.BeginHorizontal();
 
             EditorGUI.BeginDisabledGroup(isInstallingCuda);
-            if (GUILayout.Button("Instal·lar CUDA 11.8", GUILayout.Height(25)))
+            if (GUILayout.Button("Install CUDA 11.8", GUILayout.Height(25)))
             {
                 if (ConfirmCudaInstallation("11.8"))
                 {
@@ -445,7 +445,7 @@ namespace Hunyuan3D.Editor
                 }
             }
 
-            if (GUILayout.Button("Instal·lar PyTorch CUDA 11.8", GUILayout.Height(25)))
+            if (GUILayout.Button("Install PyTorch CUDA 11.8", GUILayout.Height(25)))
             {
                 _ = InstallPyTorchCuda118();
             }
@@ -454,17 +454,17 @@ namespace Hunyuan3D.Editor
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Detectar CUDA", GUILayout.Height(25)))
+            if (GUILayout.Button("Detect CUDA", GUILayout.Height(25)))
             {
                 _ = DetectCudaInstallation();
             }
 
-            if (GUILayout.Button("Verificar Instal·lació", GUILayout.Height(25)))
+            if (GUILayout.Button("Verify Installation", GUILayout.Height(25)))
             {
                 _ = VerifyFullInstallation();
             }
 
-            if (GUILayout.Button("Reparar PATH CUDA", GUILayout.Height(25)))
+            if (GUILayout.Button("Repair CUDA PATH", GUILayout.Height(25)))
             {
                 RepairCudaPath();
             }
@@ -473,7 +473,7 @@ namespace Hunyuan3D.Editor
             if (isCheckingDependencies || isInstalling || isInstallingCuda)
             {
                 EditorGUILayout.Space(5);
-                EditorGUILayout.LabelField("Estat:", statusMessage);
+                EditorGUILayout.LabelField("Status:", statusMessage);
                 EditorGUILayout.Space(2);
                 EditorGUI.ProgressBar(EditorGUILayout.GetControlRect(), progress, $"{(progress * 100):F1}%");
             }
@@ -481,7 +481,7 @@ namespace Hunyuan3D.Editor
 
         private void DrawDependencyStatus()
         {
-            EditorGUILayout.LabelField("Estat de les Dependències", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Dependencies Status", EditorStyles.boldLabel);
 
             // Crear un ScrollView amb altura fixa per limitar l'espai vertical
             EditorGUILayout.BeginVertical(GUILayout.MaxHeight(150)); // Limitar altura a 150 píxels
@@ -524,7 +524,7 @@ namespace Hunyuan3D.Editor
                 // Botó d'instal·lació individual
                 if (status == DependencyStatus.NotInstalled)
                 {
-                    if (GUILayout.Button("Instal·lar", GUILayout.Width(70)))
+                    if (GUILayout.Button("Install", GUILayout.Width(70)))
                     {
                         _ = InstallSingleDependency(dep);
                     }
@@ -539,7 +539,7 @@ namespace Hunyuan3D.Editor
 
         private void DrawProgressAndLogs()
         {
-            EditorGUILayout.LabelField("Logs d'Instal·lació", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Installation Logs", EditorStyles.boldLabel);
 
             // Convertir els missatges de log a un string únic 
             string logContent = string.Join("\n", logMessages);
@@ -562,11 +562,11 @@ namespace Hunyuan3D.Editor
             EditorGUILayout.EndScrollView();
 
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Netejar Logs"))
+            if (GUILayout.Button("Clear Logs"))
             {
                 logMessages.Clear();
             }
-            if (GUILayout.Button("Copiar Tots els Logs"))
+            if (GUILayout.Button("Copy All Logs"))
             {
                 CopyLogsToClipboard();
             }
