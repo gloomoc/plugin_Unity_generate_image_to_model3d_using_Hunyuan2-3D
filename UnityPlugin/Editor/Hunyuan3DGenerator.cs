@@ -755,7 +755,7 @@ namespace Hunyuan3D.Editor
                     process.BeginErrorReadLine();
 
                     // Esperar amb timeout
-                    bool completed = await Task.Run(() => process.WaitForExit(600000)); // 10 minuts
+                    bool completed = await Task.Run(() => process.WaitForExit(1200000)); // 20 minuts
 
                     if (!completed)
                     {
