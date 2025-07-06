@@ -4,14 +4,14 @@ using UnityEngine;
 namespace Hunyuan3D.Editor
 {
     /// <summary>
-    /// Pantalla de benvinguda i guia d'instal·lació per Hunyuan3D
+    /// Welcome and installation guide screen for Hunyuan3D
     /// </summary>
     public class Hunyuan3DWelcome : EditorWindow
     {
         private Vector2 scrollPosition = Vector2.zero;
         private bool showOnStartup = true;
         
-        // Icones i estils
+        // Icons and styles
         private GUIStyle titleStyle;
         private GUIStyle subtitleStyle;
         private GUIStyle stepStyle;
@@ -106,7 +106,7 @@ namespace Hunyuan3D.Editor
             
             EditorGUILayout.Space(10);
             
-            // Estadístiques del repositori
+            // Repository statistics
             using (new EditorGUILayout.HorizontalScope())
             {
                 GUILayout.FlexibleSpace();
@@ -161,61 +161,61 @@ namespace Hunyuan3D.Editor
             
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField("<b>Pas 1: Requisits del Sistema</b>", stepStyle);
-                EditorGUILayout.LabelField("• Python 3.8 o superior", stepStyle);
-                EditorGUILayout.LabelField("• 6 GB VRAM per generació de forma", stepStyle);
-                EditorGUILayout.LabelField("• 16 GB VRAM total per forma + textura", stepStyle);
-                EditorGUILayout.LabelField("• Unity 2020.3 LTS o superior", stepStyle);
+                EditorGUILayout.LabelField("<b>Step 1: System Requirements</b>", stepStyle);
+                EditorGUILayout.LabelField("• Python 3.8 or higher", stepStyle);
+                EditorGUILayout.LabelField("• 6 GB VRAM for shape generation", stepStyle);
+                EditorGUILayout.LabelField("• 16 GB VRAM total for shape + texture", stepStyle);
+                EditorGUILayout.LabelField("• Unity 2020.3 LTS or higher", stepStyle);
                 
                 EditorGUILayout.Space(10);
                 
-                EditorGUILayout.LabelField("<b>Pas 2: Instal·lació de Dependències Python</b>", stepStyle);
-                EditorGUILayout.LabelField("Opció A (Recomanada): Usa el nostre Dependency Manager automàtic", stepStyle);
-                EditorGUILayout.LabelField("Opció B: Instal·lació manual seguint README.md", stepStyle);
+                EditorGUILayout.LabelField("<b>Step 2: Python Dependency Installation</b>", stepStyle);
+                EditorGUILayout.LabelField("Option A (Recommended): Use our automatic Dependency Manager", stepStyle);
+                EditorGUILayout.LabelField("Option B: Manual installation following README.md", stepStyle);
                 
                 EditorGUILayout.Space(10);
                 
-                EditorGUILayout.LabelField("<b>Pas 3: Scripts de Python</b>", stepStyle);
-                EditorGUILayout.LabelField("• Descarrega els scripts del repositori oficial", stepStyle);
-                EditorGUILayout.LabelField("• Col·loca'ls al directori del projecte Unity", stepStyle);
-                EditorGUILayout.LabelField("• El plugin els detectarà automàticament", stepStyle);
+                EditorGUILayout.LabelField("<b>Step 3: Python Scripts</b>", stepStyle);
+                EditorGUILayout.LabelField("• Download the scripts from the official repository", stepStyle);
+                EditorGUILayout.LabelField("• Place them in the Unity project directory", stepStyle);
+                EditorGUILayout.LabelField("• The plugin will detect them automatically", stepStyle);
                 
                 EditorGUILayout.Space(10);
                 
-                EditorGUILayout.LabelField("<b>Pas 4: Configuració Unity</b>", stepStyle);
-                EditorGUILayout.LabelField("• Configura paths de Python i scripts", stepStyle);
-                EditorGUILayout.LabelField("• Ajusta paràmetres segons el teu hardware", stepStyle);
-                EditorGUILayout.LabelField("• Prova amb una imatge d'exemple", stepStyle);
+                EditorGUILayout.LabelField("<b>Step 4: Unity Configuration</b>", stepStyle);
+                EditorGUILayout.LabelField("• Configure Python and script paths", stepStyle);
+                EditorGUILayout.LabelField("• Adjust parameters according to your hardware", stepStyle);
+                EditorGUILayout.LabelField("• Test with an example image", stepStyle);
             }
         }
         
         private void DrawTroubleshooting()
         {
-            EditorGUILayout.LabelField("🔧 Resolució de Problemes Comuns", subtitleStyle);
+            EditorGUILayout.LabelField("🔧 Common Troubleshooting", subtitleStyle);
             
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField("<b>❌ Python no trobat</b>", stepStyle);
-                EditorGUILayout.LabelField("→ Assegura't que Python estigui instal·lat i sigui accessible des del PATH", stepStyle);
-                EditorGUILayout.LabelField("→ Usa el botó 'Detectar' al Dependency Manager", stepStyle);
+                EditorGUILayout.LabelField("<b>❌ Python not found</b>", stepStyle);
+                EditorGUILayout.LabelField("→ Make sure Python is installed and accessible from the PATH", stepStyle);
+                EditorGUILayout.LabelField("→ Use the 'Detect' button in the Dependency Manager", stepStyle);
                 
                 EditorGUILayout.Space(5);
                 
-                EditorGUILayout.LabelField("<b>❌ Dependències no instal·lades</b>", stepStyle);
-                EditorGUILayout.LabelField("→ Usa 'Instal·lar Tot' al Dependency Manager", stepStyle);
-                EditorGUILayout.LabelField("→ Si falla, prova crear un Conda Environment", stepStyle);
+                EditorGUILayout.LabelField("<b>❌ Dependencies not installed</b>", stepStyle);
+                EditorGUILayout.LabelField("→ Use 'Install All' in the Dependency Manager", stepStyle);
+                EditorGUILayout.LabelField("→ If it fails, try creating a Conda Environment", stepStyle);
                 
                 EditorGUILayout.Space(5);
                 
-                EditorGUILayout.LabelField("<b>❌ Error de CUDA</b>", stepStyle);
-                EditorGUILayout.LabelField("→ Selecciona mode 'CPU' si no tens targeta NVIDIA", stepStyle);
-                EditorGUILayout.LabelField("→ Actualitza drivers NVIDIA si tens targeta compatible", stepStyle);
+                EditorGUILayout.LabelField("<b>❌ CUDA Error</b>", stepStyle);
+                EditorGUILayout.LabelField("→ Select 'CPU' mode if you don't have an NVIDIA card", stepStyle);
+                EditorGUILayout.LabelField("→ Update NVIDIA drivers if you have a compatible card", stepStyle);
                 
                 EditorGUILayout.Space(5);
                 
-                EditorGUILayout.LabelField("<b>❌ Models no s'importen</b>", stepStyle);
-                EditorGUILayout.LabelField("→ Verifica que la carpeta de sortida estigui dins d'Assets/", stepStyle);
-                EditorGUILayout.LabelField("→ Comprova permisos d'escriptura de Unity", stepStyle);
+                EditorGUILayout.LabelField("<b>❌ Models are not imported</b>", stepStyle);
+                EditorGUILayout.LabelField("→ Verify that the output folder is inside Assets/", stepStyle);
+                EditorGUILayout.LabelField("→ Check Unity's write permissions", stepStyle);
             }
         }
         
@@ -225,14 +225,14 @@ namespace Hunyuan3D.Editor
             
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.LabelField("📚 Recursos Addicionals:", stepStyle);
+                EditorGUILayout.LabelField("📚 Additional Resources:", stepStyle);
                 
-                if (GUILayout.Button("GitHub Oficial", GUILayout.Width(100)))
+                if (GUILayout.Button("Official GitHub", GUILayout.Width(100)))
                 {
                     Application.OpenURL("https://github.com/Tencent-Hunyuan/Hunyuan3D-2");
                 }
                 
-                if (GUILayout.Button("Demo Online", GUILayout.Width(100)))
+                if (GUILayout.Button("Online Demo", GUILayout.Width(100)))
                 {
                     Application.OpenURL("https://3d.hunyuan.tencent.com/");
                 }
@@ -247,21 +247,21 @@ namespace Hunyuan3D.Editor
             
             using (new EditorGUILayout.HorizontalScope())
             {
-                showOnStartup = EditorGUILayout.Toggle("Mostrar aquesta finestra a l'inici", showOnStartup);
+                showOnStartup = EditorGUILayout.Toggle("Show this window on startup", showOnStartup);
                 
                 GUILayout.FlexibleSpace();
                 
-                if (GUILayout.Button("Tancar", GUILayout.Width(80)))
+                if (GUILayout.Button("Close", GUILayout.Width(80)))
                 {
                     Close();
                 }
             }
             
-            // Guardar preferència
+            // Save preference
             EditorPrefs.SetBool(SHOW_ON_STARTUP_KEY, showOnStartup);
             
             EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("© 2025 Hunyuan3D Unity Plugin - Basat en Tencent Hunyuan3D-2", EditorStyles.centeredGreyMiniLabel);
+            EditorGUILayout.LabelField("© 2025 Hunyuan3D Unity Plugin - Based on Tencent Hunyuan3D-2", EditorStyles.centeredGreyMiniLabel);
         }
     }
 }

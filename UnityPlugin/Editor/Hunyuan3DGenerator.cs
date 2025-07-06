@@ -155,7 +155,7 @@ namespace Hunyuan3D.Editor
         {
             EditorGUILayout.LabelField("Path Configuration", EditorStyles.boldLabel);
 
-            // Botó per detectar instal·lació del PowerShell
+            // Button to detect PowerShell installation
             if (GUILayout.Button("🔍 Detect PowerShell Installation", GUILayout.Height(25)))
             {
                 string powerShellPath = @"C:\Users\" + Environment.UserName + @"\AppData\Local\Temp\Hunyuan2-3D-for-windows";
@@ -171,17 +171,17 @@ namespace Hunyuan3D.Editor
                             config.scriptBasePath = powerShellPath;
                             config.Save();
 
-                            AddLogMessage($"✅ Instal·lació PowerShell detectada!");
+                            AddLogMessage($"✅ PowerShell installation detected!");
                             AddLogMessage($"📁 Path: {powerShellPath}");
                             AddLogMessage($"🐍 Python: {venvPython}");
 
                             EditorUtility.DisplayDialog(
-                                "Instal·lació Detectada",
-                                $"S'ha detectat la instal·lació del PowerShell!\n\n" +
+                                "Installation Detected",
+                                $"PowerShell installation has been detected!\n\n" +
                                 $"Path: {powerShellPath}\n" +
                                 $"Python: {venvPython}\n\n" +
-                                "La configuració s'ha actualitzat automàticament.",
-                                "Perfecte!"
+                                "The configuration has been updated automatically.",
+                                "Great!"
                             );
                         }
                     }
@@ -189,11 +189,11 @@ namespace Hunyuan3D.Editor
                 else
                 {
                     EditorUtility.DisplayDialog(
-                        "Instal·lació No Trobada",
-                        "No s'ha trobat la instal·lació del PowerShell.\n\n" +
-                        "Assegura't d'haver executat el script d'instal·lació PowerShell\n" +
-                        "des del Dependency Manager.",
-                        "D'acord"
+                        "Installation Not Found",
+                        "PowerShell installation was not found.\n\n" +
+                        "Make sure you have run the PowerShell installation script\n" +
+                        "from the Dependency Manager.",
+                        "OK"
                     );
                 }
             }
@@ -211,7 +211,7 @@ namespace Hunyuan3D.Editor
             }
             EditorGUILayout.EndHorizontal();
             
-            // Mostrar si estem usant un venv
+            // Show if we are using a venv
             if (config.pythonExecutablePath.Contains(".venv"))
             {
                 EditorGUILayout.HelpBox("✅ Using Python from virtual environment", MessageType.Info);
@@ -230,7 +230,7 @@ namespace Hunyuan3D.Editor
             }
             EditorGUILayout.EndHorizontal();
             
-            // Verificar si els scripts existeixen
+            // Check if scripts exist
             if (!string.IsNullOrEmpty(config.scriptBasePath))
             {
                 string batchScript = Path.Combine(config.scriptBasePath, "batch_hunyuan3d.py");
@@ -242,11 +242,11 @@ namespace Hunyuan3D.Editor
                 EditorGUILayout.EndHorizontal();
             }
             
-            // Botó per guardar configuració
+            // Button to save configuration
             if (GUILayout.Button("Save Configuration"))
             {
                 config.Save();
-                AddLogMessage("✓ Configuració guardada.");
+                AddLogMessage("✓ Configuration saved.");
             }
         }
 
@@ -254,7 +254,7 @@ namespace Hunyuan3D.Editor
         {
             EditorGUILayout.LabelField("Input Selection", EditorStyles.boldLabel);
             
-            batchMode = EditorGUILayout.Toggle("Mode Batch (carpeta)", batchMode);
+            batchMode = EditorGUILayout.Toggle("Batch Mode (folder)", batchMode);
             
             EditorGUILayout.BeginHorizontal();
             if (batchMode)
@@ -394,44 +394,44 @@ namespace Hunyuan3D.Editor
         {
             EditorGUILayout.LabelField("Installation Logs", EditorStyles.boldLabel);
 
-            // Convertir els missatges de log a un string únic
+            // Convert log messages to a single string
             string logContent = string.Join("\n", logMessages);
 
-            // Crear un estil personalitzat per al TextArea
+            // Create a custom style for the TextArea
             GUIStyle logStyle = new GUIStyle(GUI.skin.textArea)
             {
                 wordWrap = true,
-                richText = false, // Desactivar richText per evitar problemes amb la selecció
+                richText = false, // Disable richText to avoid issues with selection
                 fontSize = 11,
                 padding = new RectOffset(5, 5, 5, 5)
             };
 
-            // ScrollView per als logs with dynamic height
+            // ScrollView for logs with dynamic height
             float availableHeight = position.height - 450; // Account for other UI elements
             float logHeight = Mathf.Clamp(availableHeight, 150, 300); // Min 150, max 300
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.Height(logHeight));
 
-            // Capturar focus per permetre Ctrl+C
+            // Capture focus to allow Ctrl+C
             GUI.SetNextControlName("LogTextArea");
 
-            // TextArea que permet selecció i còpia
+            // TextArea that allows selection and copy
             string newLogContent = EditorGUILayout.TextArea(logContent, logStyle, GUILayout.ExpandHeight(true));
 
-            // Si l'usuari ha fet focus al TextArea, processar Ctrl+C
+            // If the user has focused the TextArea, process Ctrl+C
             if (GUI.GetNameOfFocusedControl() == "LogTextArea")
             {
                 Event e = Event.current;
                 if (e.type == EventType.KeyDown && e.control && e.keyCode == KeyCode.C)
                 {
-                    // Unity ja gestiona Ctrl+C automàticament per TextArea
-                    // però podem afegir feedback visual si volem
-                    EditorGUIUtility.systemCopyBuffer = EditorGUIUtility.systemCopyBuffer; // Forçar actualització
+                    // Unity already handles Ctrl+C automatically for TextArea
+                    // but we can add visual feedback if we want
+                    EditorGUIUtility.systemCopyBuffer = EditorGUIUtility.systemCopyBuffer; // Force update
                 }
             }
 
             EditorGUILayout.EndScrollView();
 
-            // Informació sobre la funcionalitat
+            // Information about the functionality
             EditorGUILayout.HelpBox("You can select text from the log and copy it with Ctrl+C", MessageType.Info);
 
             EditorGUILayout.BeginHorizontal();
@@ -444,18 +444,18 @@ namespace Hunyuan3D.Editor
                 CopyLogsToClipboard();
             }
 
-            // Botó addicional per copiar la selecció actual
+            // Additional button to copy the current selection
             if (GUILayout.Button("Copy Selection"))
             {
                 TextEditor textEditor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
                 if (textEditor != null && textEditor.hasSelection)
                 {
                     EditorGUIUtility.systemCopyBuffer = textEditor.SelectedText;
-                    AddLogMessage("✓ Selecció copiada al portapapers");
+                    AddLogMessage("✓ Selection copied to clipboard");
                 }
                 else
                 {
-                    AddLogMessage("⚠ No hi ha text seleccionat");
+                    AddLogMessage("⚠ No text selected");
                 }
             }
 
@@ -466,7 +466,7 @@ namespace Hunyuan3D.Editor
         {
             string allLogs = string.Join("\n", logMessages);
             GUIUtility.systemCopyBuffer = allLogs;
-            AddLogMessage("Logs copiats al portapapers!");
+            AddLogMessage("Logs copied to clipboard!");
         }
         #endregion
 
@@ -475,27 +475,27 @@ namespace Hunyuan3D.Editor
         {
             if (string.IsNullOrEmpty(selectedImagePath))
             {
-                AddLogMessage("Error: Si us plau, selecciona una imatge o carpeta.");
+                AddLogMessage("Error: Please select an image or folder.");
                 return false;
             }
             
             if (batchMode && !Directory.Exists(selectedImagePath))
             {
-                AddLogMessage("Error: La carpeta especificada no existeix.");
+                AddLogMessage("Error: The specified folder does not exist.");
                 return false;
             }
             
             if (!batchMode && !File.Exists(selectedImagePath))
             {
-                AddLogMessage("Error: La imatge especificada no existeix.");
+                AddLogMessage("Error: The specified image does not exist.");
                 return false;
             }
             
-            // Utilitzar la validació de la configuració
+            // Use the configuration validation
             string errorMessage;
             if (!config.IsValid(out errorMessage))
             {
-                AddLogMessage($"Error de configuració: {errorMessage}");
+                AddLogMessage($"Configuration error: {errorMessage}");
                 return false;
             }
             
@@ -512,30 +512,30 @@ namespace Hunyuan3D.Editor
 
             try
             {
-                // Verificar instal·lació primer
+                // Verify installation first
                 if (!await VerifyHunyuan3DInstallation())
                 {
                     EditorUtility.DisplayDialog(
-                        "Error d'instal·lació",
-                        "No s'ha pogut trobar els mòduls de Hunyuan3D.\n\n" +
-                        "Assegura't que:\n" +
-                        "1. Has executat el Dependency Manager\n" +
-                        "2. El path dels scripts apunta al directori correcte\n" +
-                        "3. Hunyuan3D està instal·lat correctament\n\n" +
-                        "Prova a fer clic a 'Detectar Entorn Virtual' primer.",
-                        "D'acord"
+                        "Installation Error",
+                        "Could not find the Hunyuan3D modules.\n\n" +
+                        "Make sure that:\n" +
+                        "1. You have run the Dependency Manager\n" +
+                        "2. The scripts path points to the correct directory\n" +
+                        "3. Hunyuan3D is installed correctly\n\n" +
+                        "Try clicking 'Detect Virtual Environment' first.",
+                        "OK"
                     );
                     return;
                 }
 
-                // Crear carpeta de sortida absoluta
+                // Create absolute output folder
                 string absoluteOutputPath = Path.GetFullPath(outputFolder);
                 if (!Directory.Exists(absoluteOutputPath))
                 {
                     Directory.CreateDirectory(absoluteOutputPath);
                 }
 
-                // Preprocessar amb remove_background si és necessari
+                // Preprocess with remove_background if necessary
                 string processedImagePath = selectedImagePath;
                 if (config.removeBackground && !batchMode)
                 {
@@ -544,7 +544,7 @@ namespace Hunyuan3D.Editor
                     processedImagePath = await PreprocessImage(selectedImagePath);
                     if (string.IsNullOrEmpty(processedImagePath))
                     {
-                        AddLogMessage("Error: No s'ha pogut eliminar el fons de la imatge.");
+                        AddLogMessage("Error: Could not remove image background.");
                         return;
                     }
                 }
@@ -560,19 +560,19 @@ namespace Hunyuan3D.Editor
                     progress = 0.9f;
                     statusMessage = "Importing assets to Unity...";
 
-                    // Importar els nous assets
+                    // Import new assets
                     AssetDatabase.Refresh();
 
-                    // Buscar i seleccionar els nous models
+                    // Find and select the new models
                     await SelectGeneratedModels(absoluteOutputPath);
 
                     progress = 1f;
                     statusMessage = "Processing completed!";
-                    AddLogMessage("✓ Processament completat amb èxit!");
+                    AddLogMessage("✓ Processing completed successfully!");
                 }
                 else
                 {
-                    AddLogMessage("✗ Error durant el processament.");
+                    AddLogMessage("✗ Error during processing.");
                 }
             }
             catch (Exception ex)
@@ -591,7 +591,7 @@ namespace Hunyuan3D.Editor
             string rembgScript = Path.Combine(config.scriptBasePath, "remove_background.py");
             if (!File.Exists(rembgScript))
             {
-                AddLogMessage("Advertència: remove_background.py no trobat. Saltant preprocessament.");
+                AddLogMessage("Warning: remove_background.py not found. Skipping preprocessing.");
                 return imagePath;
             }
             
@@ -601,17 +601,17 @@ namespace Hunyuan3D.Editor
             
             string arguments = $"\"{rembgScript}\" \"{imagePath}\" \"{outputPath}\"";
             
-            AddLogMessage($"Executant: {config.pythonExecutablePath} {arguments}");
+            AddLogMessage($"Executing: {config.pythonExecutablePath} {arguments}");
             
             bool success = await ExecutePythonScript(arguments);
             
             if (success && File.Exists(outputPath))
             {
-                AddLogMessage("✓ Fons eliminat correctament.");
+                AddLogMessage("✓ Background removed successfully.");
                 return outputPath;
             }
             
-            AddLogMessage("✗ Error eliminant el fons. Utilitzant imatge original.");
+            AddLogMessage("✗ Error removing background. Using original image.");
             return imagePath;
         }
 
@@ -656,18 +656,18 @@ namespace Hunyuan3D.Editor
         {
             try
             {
-                // Detectar si existeix un entorn virtual al projecte
+                // Detect if a virtual environment exists in the project
                 string venvPath = DetectVirtualEnvironment();
                 string pythonExe = config.pythonExecutablePath;
                 string actualCommand = pythonExe;
                 string actualArguments = arguments;
 
-                // Comprovar si UV està disponible
+                // Check if UV is available
                 bool useUV = await CheckUVAvailable();
 
                 if (!string.IsNullOrEmpty(venvPath))
                 {
-                    // Usar Python del venv si existeix
+                    // Use Python from the venv if it exists
                     string venvPython = Path.Combine(venvPath, "Scripts", "python.exe");
                     if (File.Exists(venvPython))
                     {
@@ -675,24 +675,24 @@ namespace Hunyuan3D.Editor
 
                         if (useUV)
                         {
-                            // Si tenim UV, usar-lo per executar Python
+                            // If we have UV, use it to run Python
                             actualCommand = "uv.exe";
                             actualArguments = $"run python {arguments}";
-                            AddLogMessage($"🚀 Usant UV per executar Python del venv");
+                            AddLogMessage($"🚀 Using UV to run Python from venv");
                         }
                         else
                         {
                             actualCommand = venvPython;
-                            AddLogMessage($"🐍 Usant Python del venv directament: {venvPython}");
+                            AddLogMessage($"🐍 Using Python from venv directly: {venvPython}");
                         }
                     }
                 }
                 else if (useUV)
                 {
-                    // Si no hi ha venv però tenim UV, usar-lo igualment
+                    // If there is no venv but we have UV, use it anyway
                     actualCommand = "uv.exe";
                     actualArguments = $"run python {arguments}";
-                    AddLogMessage($"🚀 Usant UV per executar Python");
+                    AddLogMessage($"🚀 Using UV to run Python");
                 }
 
                 ProcessStartInfo startInfo = new ProcessStartInfo
@@ -706,7 +706,7 @@ namespace Hunyuan3D.Editor
                     WorkingDirectory = config.scriptBasePath
                 };
 
-                // Configurar variables d'entorn necessàries
+                // Set necessary environment variables
                 SetPythonEnvironmentVariables(startInfo, venvPath);
 
                 using (Process process = new Process())
@@ -743,8 +743,8 @@ namespace Hunyuan3D.Editor
                                 // Detectar errors d'importació
                                 if (e.Data.Contains("ModuleNotFoundError") || e.Data.Contains("ImportError"))
                                 {
-                                    AddLogMessage("❌ Error: Mòduls no trobats!");
-                                    AddLogMessage("   Executa primer el Dependency Manager");
+                                    AddLogMessage("❌ Error: Modules not found!");
+                                    AddLogMessage("   Run the Dependency Manager first");
                                 }
                             });
                         }
@@ -808,7 +808,7 @@ namespace Hunyuan3D.Editor
 
                     if (isAvailable)
                     {
-                        AddLogMessage($"✅ UV disponible: {output.Trim()}");
+                        AddLogMessage($"✅ UV available: {output.Trim()}");
                     }
 
                     return isAvailable;
@@ -824,15 +824,15 @@ namespace Hunyuan3D.Editor
         {
             try
             {
-                // Buscar .venv en diferents ubicacions possibles
+                // Search for .venv in different possible locations
                 string[] possibleVenvPaths = {
-                    // Path del PowerShell installer
+                    // PowerShell installer path
                     @"C:\Users\" + Environment.UserName + @"\AppData\Local\Temp\Hunyuan2-3D-for-windows\.venv",
-                    // Path dins del projecte Unity
+                    // Path inside the Unity project
                     Path.Combine(Application.dataPath, "UnityPlugin", "Scripts", ".venv"),
                     Path.Combine(config.scriptBasePath, ".venv"),
                     Path.Combine(Directory.GetParent(Application.dataPath).FullName, ".venv"),
-                    // Path alternatiu si s'ha mogut
+                    // Alternative path if moved
                     Path.Combine(config.scriptBasePath, "..", ".venv")
                 };
 
@@ -844,59 +844,59 @@ namespace Hunyuan3D.Editor
 
                         if (File.Exists(pythonExe))
                         {
-                            AddLogMessage($"✅ Entorn virtual detectat: {venvPath}");
+                            AddLogMessage($"✅ Virtual environment detected: {venvPath}");
 
-                            // Verificar que té les dependències instal·lades
+                            // Verify that it has the dependencies installed
                             if (File.Exists(Path.Combine(venvPath, "Lib", "site-packages", "torch", "__init__.py")))
                             {
-                                AddLogMessage("✅ PyTorch detectat al venv");
+                                AddLogMessage("✅ PyTorch detected in venv");
                                 return venvPath;
                             }
                             else
                             {
-                                AddLogMessage("⚠️ Venv trobat però sense PyTorch");
+                                AddLogMessage("⚠️ Venv found but without PyTorch");
                             }
                         }
                     }
                 }
 
-                AddLogMessage("⚠️ No s'ha detectat cap entorn virtual .venv amb dependències");
+                AddLogMessage("⚠️ No .venv virtual environment with dependencies detected");
                 return null;
             }
             catch (Exception ex)
             {
-                AddLogMessage($"Error detectant venv: {ex.Message}");
+                AddLogMessage($"Error detecting venv: {ex.Message}");
                 return null;
             }
         }
 
         private void SetPythonEnvironmentVariables(ProcessStartInfo startInfo, string venvPath = null)
         {
-            // Si tenim un venv, configurar-lo
+            // If we have a venv, configure it
             if (!string.IsNullOrEmpty(venvPath))
             {
-                // Activar l'entorn virtual
+                // Activate the virtual environment
                 string venvScripts = Path.Combine(venvPath, "Scripts");
                 string venvLibs = Path.Combine(venvPath, "Lib", "site-packages");
 
-                // Actualitzar PATH per incloure Scripts del venv
+                // Update PATH to include venv Scripts
                 string currentPath = startInfo.EnvironmentVariables["PATH"] ?? Environment.GetEnvironmentVariable("PATH");
                 startInfo.EnvironmentVariables["PATH"] = $"{venvScripts};{currentPath}";
 
-                // Configurar VIRTUAL_ENV
+                // Set VIRTUAL_ENV
                 startInfo.EnvironmentVariables["VIRTUAL_ENV"] = venvPath;
 
-                // Eliminar PYTHONHOME si existeix (pot interferir amb venv)
+                // Remove PYTHONHOME if it exists (can interfere with venv)
                 if (startInfo.EnvironmentVariables.ContainsKey("PYTHONHOME"))
                 {
                     startInfo.EnvironmentVariables.Remove("PYTHONHOME");
                 }
             }
 
-            // Determinar el directori de Hunyuan3D
+            // Determine the Hunyuan3D directory
             string hunyuan3dPath = "";
 
-            // Path específic del PowerShell installer
+            // Specific path for the PowerShell installer
             string installerPath = @"C:\Users\" + Environment.UserName + @"\AppData\Local\Temp\Hunyuan2-3D-for-windows";
             string hunyuan3dInstallerPath = Path.Combine(installerPath, "Hunyuan3D-2");
 
@@ -905,7 +905,7 @@ namespace Hunyuan3D.Editor
                 hunyuan3dPath = hunyuan3dInstallerPath;
                 AddLogMessage($"📁 Hunyuan3D detectat (PowerShell): {hunyuan3dPath}");
 
-                // Actualitzar també el scriptBasePath si està buit
+                // Also update scriptBasePath if it's empty
                 if (string.IsNullOrEmpty(config.scriptBasePath) || !Directory.Exists(config.scriptBasePath))
                 {
                     config.scriptBasePath = installerPath;
@@ -1053,15 +1053,15 @@ namespace Hunyuan3D.Editor
         {
             try
             {
-                AddLogMessage("🔍 Verificant instal·lació de Hunyuan3D...");
+                AddLogMessage("🔍 Verifying Hunyuan3D installation...");
 
-                // Detectar venv
+                // Detect venv
                 string venvPath = DetectVirtualEnvironment();
                 string pythonExe = config.pythonExecutablePath;
                 string actualCommand = pythonExe;
                 string actualArguments = "";
 
-                // Comprovar si UV està disponible
+                // Check if UV is available
                 bool useUV = await CheckUVAvailable();
 
                 if (!string.IsNullOrEmpty(venvPath))
@@ -1069,7 +1069,7 @@ namespace Hunyuan3D.Editor
                     pythonExe = Path.Combine(venvPath, "Scripts", "python.exe");
                 }
 
-                // Script de verificació
+                // Verification script
                 string verifyScript = @"
 import sys
 print(f'Python: {sys.executable}')
@@ -1077,7 +1077,7 @@ print(f'Version: {sys.version}')
 try:
     import hy3dgen
     from hy3dgen.shapegen import Hunyuan3DDiTFlowMatchingPipeline
-    print('✅ Hunyuan3D trobat i accessible')
+    print('✅ Hunyuan3D found and accessible')
     sys.exit(0)
 except ImportError as e:
     print(f'❌ ERROR: {e}')
@@ -1121,7 +1121,7 @@ except ImportError as e:
 
                     await Task.Run(() => process.WaitForExit(5000));
 
-                    // Netejar
+                    // Clean up
                     try { File.Delete(tempScript); } catch { }
 
                     AddLogMessage(output);
@@ -1130,23 +1130,23 @@ except ImportError as e:
                         AddLogMessage($"Errors: {error}");
                     }
 
-                    return output.Contains("✅ Hunyuan3D trobat");
+                    return output.Contains("✅ Hunyuan3D found");
                 }
             }
             catch (Exception ex)
             {
-                AddLogMessage($"❌ Error verificant: {ex.Message}");
+                AddLogMessage($"❌ Error verifying: {ex.Message}");
                 return false;
             }
         }
 
         private async Task SelectGeneratedModels(string outputPath)
         {
-            await Task.Delay(500); // Esperar que Unity processi els assets
+            await Task.Delay(500); // Wait for Unity to process the assets
             
             try
             {
-                // Buscar fitxers generats
+                // Search for generated files
                 string[] extensions = { $".{config.fileType}", ".png", ".jpg" };
                 List<string> generatedFiles = new List<string>();
                 
@@ -1157,7 +1157,7 @@ except ImportError as e:
                 
                 if (generatedFiles.Count > 0)
                 {
-                    // Convertir paths absoluts a relatius d'Assets
+                    // Convert absolute paths to relative Asset paths
                     List<UnityEngine.Object> objectsToSelect = new List<UnityEngine.Object>();
                     
                     foreach (string filePath in generatedFiles)
@@ -1169,23 +1169,23 @@ except ImportError as e:
                             if (asset != null)
                             {
                                 objectsToSelect.Add(asset);
-                                AddLogMessage($"✓ Asset importat: {relativePath}");
+                                AddLogMessage($"✓ Asset imported: {relativePath}");
                             }
                         }
                     }
                     
-                    // Seleccionar els assets a l'Inspector
+                    // Select the assets in the Inspector
                     if (objectsToSelect.Count > 0)
                     {
                         Selection.objects = objectsToSelect.ToArray();
                         EditorGUIUtility.PingObject(objectsToSelect[0]);
-                        AddLogMessage($"✓ {objectsToSelect.Count} assets seleccionats a l'Inspector.");
+                        AddLogMessage($"✓ {objectsToSelect.Count} assets selected in the Inspector.");
                     }
                 }
             }
             catch (Exception ex)
             {
-                AddLogMessage($"Error seleccionant models: {ex.Message}");
+                AddLogMessage($"Error selecting models: {ex.Message}");
             }
         }
 
@@ -1201,16 +1201,16 @@ except ImportError as e:
             string timestamp = DateTime.Now.ToString("HH:mm:ss");
             logMessages.Add($"[{timestamp}] {message}");
             
-            // Mantenir només els últims 100 missatges
+            // Keep only the last 100 messages
             if (logMessages.Count > 100)
             {
                 logMessages.RemoveAt(0);
             }
             
-            // Forçar repaint per actualitzar la UI
+            // Force repaint to update the UI
             Repaint();
             
-            // També imprimir a la consola d'Unity
+            // Also print to the Unity console
             UnityEngine.Debug.Log($"Hunyuan3D: {message}");
         }
         #endregion

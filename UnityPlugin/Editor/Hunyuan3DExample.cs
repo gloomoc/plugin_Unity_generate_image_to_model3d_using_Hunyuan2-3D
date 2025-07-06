@@ -5,8 +5,8 @@ using UnityEngine;
 namespace Hunyuan3D.Editor
 {
     /// <summary>
-    /// Exemple d'ús programàtic del plugin Hunyuan3D
-    /// Aquest script mostra com utilitzar les funcionalitats del plugin des del codi
+    /// Example of programmatic use of the Hunyuan3D plugin
+    /// This script shows how to use the plugin's functionalities from code
     /// </summary>
     public class Hunyuan3DExample : EditorWindow
     {
@@ -19,69 +19,69 @@ namespace Hunyuan3D.Editor
 
         private void OnGUI()
         {
-            EditorGUILayout.LabelField("Hunyuan3D Plugin - Exemples d'Ús", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Hunyuan3D Plugin - Usage Examples", EditorStyles.boldLabel);
             EditorGUILayout.Space(10);
 
-            if (GUILayout.Button("Configuració Ràpida per CPU", GUILayout.Height(30)))
+            if (GUILayout.Button("Quick Setup for CPU", GUILayout.Height(30)))
             {
                 SetupForCPU();
             }
 
-            if (GUILayout.Button("Configuració per GPU NVIDIA", GUILayout.Height(30)))
+            if (GUILayout.Button("Setup for NVIDIA GPU", GUILayout.Height(30)))
             {
                 SetupForGPU();
             }
 
-            if (GUILayout.Button("Configuració Mode Ràpid", GUILayout.Height(30)))
+            if (GUILayout.Button("Setup Fast Mode", GUILayout.Height(30)))
             {
                 SetupFastMode();
             }
 
-            if (GUILayout.Button("Configuració Alta Qualitat", GUILayout.Height(30)))
+            if (GUILayout.Button("Setup High Quality", GUILayout.Height(30)))
             {
                 SetupHighQuality();
             }
 
             EditorGUILayout.Space(20);
             
-            EditorGUILayout.LabelField("Ús Programàtic:", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Programmatic Usage:", EditorStyles.boldLabel);
             
-            if (GUILayout.Button("Obrir Generador Principal"))
+            if (GUILayout.Button("Open Main Generator"))
             {
                 Hunyuan3DGenerator.ShowWindow();
             }
 
             EditorGUILayout.Space(10);
             EditorGUILayout.HelpBox(
-                "Aquest exemple mostra configuracions preestablertes per diferents escenaris d'ús. " +
-                "Cada botó configura automàticament els paràmetres òptims per al cas d'ús específic.",
+                "This example shows preset configurations for different usage scenarios. " +
+                "Each button automatically configures the optimal parameters for the specific use case.",
                 MessageType.Info
             );
         }
 
         /// <summary>
-        /// Configuració optimitzada per ús amb CPU
+        /// Optimized configuration for CPU usage
         /// </summary>
         private void SetupForCPU()
         {
             var config = Hunyuan3DConfig.Load();
             
             config.device = "cpu";
-            config.steps = 20;  // Menys passos per CPU
-            config.octreeResolution = 128;  // Resolució més baixa
+            config.steps = 20;  // Fewer steps for CPU
+            config.octreeResolution = 128;  // Lower resolution
             config.lowVramMode = true;
-            config.compile = false;  // No compilar per CPU
+            config.compile = false;  // Do not compile for CPU
             config.enableFlashVDM = false;
-            config.disableTexture = true;  // Desactivar textures per rapidesa
+            config.disableTexture = true;  // Disable textures for speed
             
             config.Save();
             
-            Debug.Log("✓ Configuració optimitzada per CPU aplicada");
-            ShowNotification(new GUIContent("Configuració CPU aplicada!"));
+            Debug.Log("✓ Optimized configuration for CPU applied");
+            ShowNotification(new GUIContent("CPU configuration applied!"));
         }
 
         /// <summary>
-        /// Configuració optimitzada per GPU NVIDIA amb CUDA
+        /// Optimized configuration for NVIDIA GPU with CUDA
         /// </summary>
         private void SetupForGPU()
         {
@@ -91,71 +91,71 @@ namespace Hunyuan3D.Editor
             config.steps = 30;
             config.octreeResolution = 256;
             config.lowVramMode = false;
-            config.compile = true;  // Compilar per millor rendiment
-            config.enableFlashVDM = true;  // Acceleració
+            config.compile = true;  // Compile for better performance
+            config.enableFlashVDM = true;  // Acceleration
             config.disableTexture = false;
             
             config.Save();
             
-            Debug.Log("✓ Configuració optimitzada per GPU aplicada");
-            ShowNotification(new GUIContent("Configuració GPU aplicada!"));
+            Debug.Log("✓ Optimized configuration for GPU applied");
+            ShowNotification(new GUIContent("GPU configuration applied!"));
         }
 
         /// <summary>
-        /// Configuració per processat ràpid amb qualitat acceptable
+        /// Configuration for fast processing with acceptable quality
         /// </summary>
         private void SetupFastMode()
         {
             var config = Hunyuan3DConfig.Load();
             
-            config.steps = 15;  // Pocs passos
-            config.guidanceScale = 5.0f;  // Guidance més baix
-            config.octreeResolution = 128;  // Resolució baixa
-            config.fileType = "obj";  // Format ràpid
-            config.disableTexture = true;  // Sense textures
+            config.steps = 15;  // Few steps
+            config.guidanceScale = 5.0f;  // Lower guidance
+            config.octreeResolution = 128;  // Low resolution
+            config.fileType = "obj";  // Fast format
+            config.disableTexture = true;  // No textures
             config.lowVramMode = true;
             
             config.Save();
             
-            Debug.Log("✓ Mode ràpid activat");
-            ShowNotification(new GUIContent("Mode ràpid activat!"));
+            Debug.Log("✓ Fast mode activated");
+            ShowNotification(new GUIContent("Fast mode activated!"));
         }
 
         /// <summary>
-        /// Configuració per màxima qualitat
+        /// Configuration for maximum quality
         /// </summary>
         private void SetupHighQuality()
         {
             var config = Hunyuan3DConfig.Load();
             
-            config.steps = 50;  // Molts passos
-            config.guidanceScale = 10.0f;  // Guidance alt
-            config.octreeResolution = 384;  // Alta resolució
-            config.fileType = "fbx";  // Format complet
-            config.disableTexture = false;  // Amb textures
+            config.steps = 50;  // Many steps
+            config.guidanceScale = 10.0f;  // High guidance
+            config.octreeResolution = 384;  // High resolution
+            config.fileType = "fbx";  // Complete format
+            config.disableTexture = false;  // With textures
             config.enableFlashVDM = true;
             config.compile = true;
             
             config.Save();
             
-            Debug.Log("✓ Mode alta qualitat activat");
-            ShowNotification(new GUIContent("Mode alta qualitat activat!"));
+            Debug.Log("✓ High quality mode activated");
+            ShowNotification(new GUIContent("High quality mode activated!"));
         }
     }
 
     /// <summary>
-    /// Utilitat per automatzar tasques comunes
+    /// Utility to automate common tasks
     /// </summary>
     public static class Hunyuan3DAutomation
     {
         /// <summary>
-        /// Processa automàticament totes les imatges d'una carpeta
-        /// Exemple d'ús des d'altres scripts
+        /// Automatically processes all images in a folder
+        /// Example of use from other scripts
         /// </summary>
         // [MenuItem("Tools/Hunyuan3D/Auto Process Selected Folder")] // Removed as requested
         public static void AutoProcessSelectedFolder()
         {
-            string folderPath = EditorUtility.OpenFolderPanel("Seleccionar carpeta d'imatges", "", "");
+            string folderPath = EditorUtility.OpenFolderPanel("Select image folder", "", "");
             
             if (string.IsNullOrEmpty(folderPath))
                 return;
@@ -164,35 +164,35 @@ namespace Hunyuan3D.Editor
             
             if (imageFiles.Length == 0)
             {
-                EditorUtility.DisplayDialog("Cap imatge trobada", "No s'han trobat imatges a la carpeta seleccionada.", "OK");
+                EditorUtility.DisplayDialog("No images found", "No images were found in the selected folder.", "OK");
                 return;
             }
 
             bool proceed = EditorUtility.DisplayDialog(
-                "Processar imatges",
-                $"S'han trobat {imageFiles.Length} imatges. Vols processar-les totes?",
-                "Sí", "Cancel·lar"
+                "Process images",
+                $"Found {imageFiles.Length} images. Do you want to process them all?",
+                "Yes", "Cancel"
             );
 
             if (proceed)
             {
-                // Obrir la finestra principal amb la carpeta preseleccionada
+                // Open the main window with the folder preselected
                 var window = EditorWindow.GetWindow<Hunyuan3DGenerator>();
-                // Aquí normalment passaríem el path, però com que les variables són privades,
-                // l'usuari haurà de seleccionar manualment la carpeta a la interfície
-                Debug.Log($"Processa les {imageFiles.Length} imatges de: {folderPath}");
+                // Here we would normally pass the path, but since the variables are private,
+                // the user will have to manually select the folder in the interface
+                Debug.Log($"Process the {imageFiles.Length} images from: {folderPath}");
                 
                 EditorUtility.DisplayDialog(
-                    "Instruccions",
-                    "S'ha obert la finestra del generador 3D. " +
-                    "Activa 'Mode Batch' i selecciona la carpeta per processar totes les imatges.",
-                    "Entès"
+                    "Instructions",
+                    "The 3D generator window has been opened. " +
+                    "Activate 'Batch Mode' and select the folder to process all images.",
+                    "Understood"
                 );
             }
         }
 
         /// <summary>
-        /// Neteja fitxers temporals generats pel plugin
+        /// Cleans temporary files generated by the plugin
         /// </summary>
         // [MenuItem("Tools/Hunyuan3D/Clean Temp Files")] // Removed as requested
         public static void CleanTempFiles()
@@ -210,16 +210,16 @@ namespace Hunyuan3D.Editor
                 }
                 catch (System.Exception ex)
                 {
-                    Debug.LogWarning($"No s'ha pogut eliminar {filePath}: {ex.Message}");
+                    Debug.LogWarning($"Could not delete {filePath}: {ex.Message}");
                 }
             }
 
-            Debug.Log($"✓ {deletedCount} fitxers temporals eliminats");
-            EditorUtility.DisplayDialog("Neteja completada", $"S'han eliminat {deletedCount} fitxers temporals.", "OK");
+            Debug.Log($"✓ {deletedCount} temporary files deleted");
+            EditorUtility.DisplayDialog("Cleanup complete", $"{deletedCount} temporary files have been deleted.", "OK");
         }
 
         /// <summary>
-        /// Valida la configuració actual
+        /// Validates the current configuration
         /// </summary>
         // [MenuItem("Tools/Hunyuan3D/Validate Configuration")] // Removed as requested
         public static void ValidateConfiguration()
@@ -229,18 +229,18 @@ namespace Hunyuan3D.Editor
             
             if (config.IsValid(out errorMessage))
             {
-                EditorUtility.DisplayDialog("Configuració vàlida", "La configuració actual és correcta i està llesta per utilitzar.", "OK");
-                Debug.Log("✓ Configuració validada correctament");
+                EditorUtility.DisplayDialog("Valid configuration", "The current configuration is correct and ready to use.", "OK");
+                Debug.Log("✓ Configuration validated successfully");
             }
             else
             {
-                EditorUtility.DisplayDialog("Error de configuració", $"Problema trobat: {errorMessage}", "OK");
-                Debug.LogError($"✗ Error de configuració: {errorMessage}");
+                EditorUtility.DisplayDialog("Configuration error", $"Problem found: {errorMessage}", "OK");
+                Debug.LogError($"✗ Configuration error: {errorMessage}");
             }
         }
 
         /// <summary>
-        /// Obre la carpeta de configuració
+        /// Opens the configuration folder
         /// </summary>
         // [MenuItem("Tools/Hunyuan3D/Open Config Folder")] // Removed as requested
         public static void OpenConfigFolder()
@@ -257,7 +257,7 @@ namespace Hunyuan3D.Editor
             }
             else
             {
-                EditorUtility.DisplayDialog("Carpeta no trobada", "La carpeta de configuració encara no s'ha creat. Prova obrir el plugin primer.", "OK");
+                EditorUtility.DisplayDialog("Folder not found", "The configuration folder has not been created yet. Try opening the plugin first.", "OK");
             }
         }
     }
