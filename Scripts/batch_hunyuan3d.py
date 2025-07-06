@@ -17,13 +17,13 @@ from PIL import Image
 from tqdm import tqdm
 import json
 
-# Afegir el directori del projecte al path
+# Add the project directory to the path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 def setup_imports():
-    """Importa els mòduls necessaris de Hunyuan3D"""
+    """Imports the necessary modules from Hunyuan3D"""
     try:
-        # Imports principals de Hunyuan3D
+        # Main imports from Hunyuan3D
         from hy3dgen.shapegen import (
             FaceReducer, 
             FloaterRemover, 
@@ -33,7 +33,7 @@ def setup_imports():
         from hy3dgen.shapegen.pipelines import export_to_trimesh
         from hy3dgen.rembg import BackgroundRemover
         
-        # Imports opcionals per texturització
+        # Optional imports for texturing
         try:
             from hy3dgen.texgen import Hunyuan3DPaintPipeline
             HAS_TEXTUREGEN = True
@@ -42,7 +42,7 @@ def setup_imports():
             HAS_TEXTUREGEN = False
             Hunyuan3DPaintPipeline = None
         
-        # Imports opcionals per text-to-image
+        # Optional imports for text-to-image
         try:
             from hy3dgen.text2image import HunyuanDiTPipeline
             HAS_T2I = True
@@ -64,122 +64,122 @@ def setup_imports():
             'HAS_T2I': HAS_T2I
         }
     except ImportError as e:
-        print(f"Error important mòduls de Hunyuan3D: {e}")
-        print("Assegura't que estàs executant l'script des del directori del repositori Hunyuan3D-2")
+        print(f"Error importing Hunyuan3D modules: {e}")
+        print("Make sure you are running the script from the Hunyuan3D-2 repository directory")
         sys.exit(1)
 
 def is_image_file(file_path):
-    """Comprova si un fitxer és una imatge suportada"""
+    """Checks if a file is a supported image"""
     supported_formats = ['.jpg', '.jpeg', '.png', '.bmp', '.webp', '.tiff']
     return any(str(file_path).lower().endswith(fmt) for fmt in supported_formats)
 
 class HunyuanBatchProcessor:
     def __init__(self, args):
         """
-        Inicialitza el processador seguint exactament el patró de gradio_app.py
+        Initializes the processor following exactly the pattern of gradio_app.py
         """
         self.args = args
         self.device = args.device
         
-        # Configurar directori de sortida
+        # Configure output directory
         self.output_dir = args.output
         os.makedirs(self.output_dir, exist_ok=True)
         
-        print("Inicialitzant Hunyuan3D Batch Processor...")
+        print("Initializing Hunyuan3D Batch Processor...")
         print(f"Model: {args.model_path}/{args.subfolder}")
-        print(f"Dispositiu: {args.device}")
-        print(f"Format de sortida: {args.file_type.upper()}")
+        print(f"Device: {args.device}")
+        print(f"Output format: {args.file_type.upper()}")
         
-        # Verificar suport FBX si és necessari
+        # Verify FBX support if necessary
         if args.file_type.lower() == 'fbx':
             if not self._check_fbx_dependencies():
-                print("Warning: Dependències FBX no disponibles. Es farà conversió via formats intermedis.")
+                print("Warning: FBX dependencies not available. Conversion will be done via intermediate formats.")
         
-        # Importar mòduls
+        # Import modules
         self.modules = setup_imports()
         
-        # Inicialitzar workers exactament com gradio_app.py
+        # Initialize workers exactly like gradio_app.py
         self._init_workers()
         
-        print("Models carregats correctament!\n")
+        print("Models loaded successfully!\n")
     
     def _check_fbx_dependencies(self):
-        """Comprova les dependències necessàries per FBX"""
+        """Checks the necessary dependencies for FBX"""
         fbx_methods = []
         
-        print("  Verificant dependències FBX...")
+        print("  Verifying FBX dependencies...")
         
-        # Método 1: bpy (Blender Python API) - amb timeout
-        print("    Provant Blender Python API (bpy)...")
+        # Method 1: bpy (Blender Python API) - with timeout
+        print("    Trying Blender Python API (bpy)...")
         try:
             import importlib.util
             import sys
             import signal
             
             def timeout_handler(signum, frame):
-                raise TimeoutError("Import bpy ha trigat massa")
+                raise TimeoutError("Import bpy took too long")
             
-            # Només en sistemes Unix/Linux
+            # Only on Unix/Linux systems
             if hasattr(signal, 'SIGALRM'):
                 signal.signal(signal.SIGALRM, timeout_handler)
-                signal.alarm(5)  # 5 segons timeout
+                signal.alarm(5)  # 5 seconds timeout
             
             try:
-                # Verificar si bpy existeix sense importar-lo completament
+                # Verify if bpy exists without importing it completely
                 spec = importlib.util.find_spec("bpy")
                 if spec is not None:
-                    # Intentar import ràpid
+                    # Try a quick import
                     import bpy
                     fbx_methods.append('bpy')
-                    print("      ✓ Blender Python API (bpy) disponible")
+                    print("      ✓ Blender Python API (bpy) available")
                 else:
-                    print("      ✗ bpy no trobat")
+                    print("      ✗ bpy not found")
             finally:
                 if hasattr(signal, 'SIGALRM'):
-                    signal.alarm(0)  # Cancel·lar timeout
+                    signal.alarm(0)  # Cancel timeout
                     
         except (ImportError, TimeoutError, Exception) as e:
-            print(f"      ✗ bpy no disponible: {str(e)[:50]}...")
+            print(f"      ✗ bpy not available: {str(e)[:50]}...")
         
-        # Método 2: pymeshlab - més ràpid
-        print("    Provant PyMeshLab...")
+        # Method 2: pymeshlab - faster
+        print("    Trying PyMeshLab...")
         try:
             import pymeshlab
             fbx_methods.append('pymeshlab')
-            print("      ✓ PyMeshLab disponible")
+            print("      ✓ PyMeshLab available")
         except ImportError:
-            print("      ✗ PyMeshLab no disponible")
+            print("      ✗ PyMeshLab not available")
         
-        # Método 3: Open3D
-        print("    Provant Open3D...")
+        # Method 3: Open3D
+        print("    Trying Open3D...")
         try:
             import open3d as o3d
             fbx_methods.append('open3d')
-            print("      ✓ Open3D disponible")
+            print("      ✓ Open3D available")
         except ImportError:
-            print("      ✗ Open3D no disponible")
+            print("      ✗ Open3D not available")
         
         self.fbx_methods = fbx_methods
         
         if not fbx_methods:
-            print("      ⚠️ Cap mètode FBX disponible")
-            print("         Recomanació: pip install pymeshlab open3d")
-            print("         Per bpy: pip install bpy (pot trigar molt)")
-            print("         El script continuarà amb format OBJ com a fallback")
+            print("      ⚠️ No FBX method available")
+            print("         Recommendation: pip install pymeshlab open3d")
+            print("         For bpy: pip install bpy (can take a long time)")
+            print("         The script will continue with OBJ format as a fallback")
         else:
-            print(f"      ✓ Mètodes FBX disponibles: {', '.join(fbx_methods)}")
+            print(f"      ✓ Available FBX methods: {', '.join(fbx_methods)}")
         
         return len(fbx_methods) > 0
     
     def _init_workers(self):
-        """Inicialitza tots els workers seguint gradio_app.py"""
+        """Initializes all workers following gradio_app.py"""
         
         # Background remover
-        print("Carregant Background Remover...")
+        print("Loading Background Remover...")
         self.rmbg_worker = self.modules['BackgroundRemover']()
         
         # Shape generation pipeline
-        print(f"Carregant pipeline de generació 3D...")
+        print(f"Loading 3D generation pipeline...")
         self.i23d_worker = self.modules['Hunyuan3DDiTFlowMatchingPipeline'].from_pretrained(
             self.args.model_path,
             subfolder=self.args.subfolder,
@@ -187,13 +187,13 @@ class HunyuanBatchProcessor:
             device=self.args.device,
         )
         
-        # Activar optimitzacions si estan disponibles
+        # Activate optimizations if available
         if self.args.enable_flashvdm:
             mc_algo = 'mc' if self.args.device in ['cpu', 'mps'] else self.args.mc_algo
             self.i23d_worker.enable_flashvdm(mc_algo=mc_algo)
         
         if self.args.compile:
-            print("Compilant model...")
+            print("Compiling model...")
             self.i23d_worker.compile()
         
         # Post-processing workers
@@ -201,9 +201,9 @@ class HunyuanBatchProcessor:
         self.degenerate_face_remove_worker = self.modules['DegenerateFaceRemover']()
         self.face_reduce_worker = self.modules['FaceReducer']()
         
-        # Texture generation (opcional)
+        # Texture generation (optional)
         if not self.args.disable_tex and self.modules['HAS_TEXTUREGEN']:
-            print("Carregant pipeline de texturització...")
+            print("Loading texturing pipeline...")
             self.texgen_worker = self.modules['Hunyuan3DPaintPipeline'].from_pretrained(
                 self.args.texgen_model_path
             )
@@ -212,9 +212,9 @@ class HunyuanBatchProcessor:
         else:
             self.texgen_worker = None
         
-        # Text-to-image (opcional)
+        # Text-to-image (optional)
         if self.args.enable_t23d and self.modules['HAS_T2I']:
-            print("Carregant pipeline text-to-image...")
+            print("Loading text-to-image pipeline...")
             self.t2i_worker = self.modules['HunyuanDiTPipeline'](
                 'Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled', 
                 device=self.args.device
@@ -223,26 +223,26 @@ class HunyuanBatchProcessor:
             self.t2i_worker = None
     
     def gen_save_folder(self, base_name):
-        """Genera una carpeta de sortida única per cada imatge"""
+        """Generates a unique output folder for each image"""
         folder_name = f"{base_name}_{uuid.uuid4().hex[:8]}"
         save_folder = os.path.join(self.output_dir, folder_name)
         os.makedirs(save_folder, exist_ok=True)
         return save_folder
     
     def _export_to_fbx_bpy(self, input_path, output_path):
-        """Exporta a FBX utilitzant Blender Python API (bpy)"""
+        """Exports to FBX using Blender Python API (bpy)"""
         try:
             import bpy
             import bmesh
             
-            # Netejar escena completament
+            # Clean scene completely
             bpy.ops.wm.read_factory_settings(use_empty=True)
             
-            # Eliminar objectes per defecte si existeixen
+            # Delete default objects if they exist
             if bpy.context.selected_objects:
                 bpy.ops.object.delete()
             
-            # Importar segons el format d'entrada
+            # Import according to the input format
             try:
                 if input_path.endswith('.obj'):
                     bpy.ops.wm.obj_import(filepath=input_path)
@@ -251,11 +251,11 @@ class HunyuanBatchProcessor:
                 elif input_path.endswith('.ply'):
                     bpy.ops.wm.ply_import(filepath=input_path)
                 else:
-                    # Fallback per altres formats
+                    # Fallback for other formats
                     bpy.ops.wm.obj_import(filepath=input_path)
                     
             except AttributeError:
-                # Per versions més antigues de Blender
+                # For older versions of Blender
                 if input_path.endswith('.obj'):
                     bpy.ops.import_scene.obj(filepath=input_path)
                 elif input_path.endswith(('.glb', '.gltf')):
@@ -263,51 +263,51 @@ class HunyuanBatchProcessor:
                 else:
                     bpy.ops.import_scene.obj(filepath=input_path)
             
-            # Verificar que s'ha importat alguna cosa
+            # Verify that something has been imported
             if not bpy.context.selected_objects and not bpy.data.objects:
-                print(f"        ✗ No s'han importat objectes des de {input_path}")
+                print(f"        ✗ No objects were imported from {input_path}")
                 return False
             
-            # Seleccionar tots els objectes de malla
+            # Select all mesh objects
             mesh_objects = [obj for obj in bpy.data.objects if obj.type == 'MESH']
             
             if not mesh_objects:
-                print(f"        ✗ No s'han trobat malles a {input_path}")
+                print(f"        ✗ No meshes found in {input_path}")
                 return False
             
-            # Seleccionar tots els objectes de malla
+            # Select all mesh objects
             bpy.ops.object.select_all(action='DESELECT')
             for obj in mesh_objects:
                 obj.select_set(True)
                 bpy.context.view_layer.objects.active = obj
             
-            # Aplicar transformacions
+            # Apply transformations
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             
-            # Optimitzacions de malla
+            # Mesh optimizations
             for obj in mesh_objects:
                 bpy.context.view_layer.objects.active = obj
                 bpy.ops.object.mode_set(mode='EDIT')
                 
-                # Eliminar duplicats
+                # Remove duplicates
                 bpy.ops.mesh.select_all(action='SELECT')
                 bpy.ops.mesh.remove_doubles(threshold=0.0001)
                 
-                # Recalcular normals
+                # Recalculate normals
                 bpy.ops.mesh.normals_make_consistent(inside=False)
                 
                 bpy.ops.object.mode_set(mode='OBJECT')
             
-            # Exportar a FBX amb configuració optimitzada
+            # Export to FBX with optimized settings
             bpy.ops.export_scene.fbx(
                 filepath=output_path,
                 use_selection=True,
                 use_active_collection=False,
                 
-                # Objectes a exportar
+                # Objects to export
                 object_types={'MESH'},
                 
-                # Configuració de malla
+                # Mesh settings
                 use_mesh_modifiers=True,
                 use_mesh_modifiers_render=True,
                 mesh_smooth_type='FACE',
@@ -315,11 +315,11 @@ class HunyuanBatchProcessor:
                 use_mesh_edges=False,
                 use_tspace=True,
                 
-                # Materials i textures
+                # Materials and textures
                 use_custom_props=False,
                 path_mode='AUTO',
                 
-                # Transformacions
+                # Transformations
                 bake_space_transform=False,
                 
                 # Armatures (bones)
@@ -327,127 +327,127 @@ class HunyuanBatchProcessor:
                 primary_bone_axis='Y',
                 secondary_bone_axis='X',
                 
-                # Animacions (desactivades)
+                # Animations (disabled)
                 bake_anim=False,
                 bake_anim_use_all_bones=False,
                 bake_anim_use_nla_strips=False,
                 bake_anim_use_all_actions=False,
                 
-                # Metadades
+                # Metadata
                 use_metadata=True,
                 
-                # Versió FBX
+                # FBX version
                 #version='BIN7400',  # FBX 2020
                 
-                # Configuració d'eixos
+                # Axis settings
                 axis_forward='-Z',
                 axis_up='Y'
             )
             
-            print(f"        ✓ FBX exportat correctament")
+            print(f"        ✓ FBX exported successfully")
             return True
             
         except Exception as e:
-            print(f"        ✗ Error amb bpy: {e}")
+            print(f"        ✗ Error with bpy: {e}")
             return False
     
     def _export_to_fbx_pymeshlab(self, input_path, output_path):
-        """Exporta a FBX utilitzant PyMeshLab"""
+        """Exports to FBX using PyMeshLab"""
         try:
             import pymeshlab as ml
             
-            # Crear conjunt de malles
+            # Create mesh set
             ms = ml.MeshSet()
             
-            # Carregar malla
+            # Load mesh
             ms.load_new_mesh(input_path)
             
-            # Aplicar filtres de neteja i optimització
+            # Apply cleaning and optimization filters
             try:
-                # Neteja bàsica
+                # Basic cleaning
                 ms.apply_filter('meshing_remove_duplicate_vertices')
                 ms.apply_filter('meshing_remove_null_faces')
                 ms.apply_filter('meshing_repair_non_manifold_edges')
                 
-                # Optimitzacions
+                # Optimizations
                 ms.apply_filter('compute_normals_for_point_sets')
                 ms.apply_filter('meshing_remove_connected_component_by_face_number', mincomponentsize=10)
                 
             except Exception as filter_error:
-                print(f"        ⚠ Alguns filtres han fallat: {filter_error}")
+                print(f"        ⚠ Some filters failed: {filter_error}")
             
-            # Intentar exportar a FBX
-            # Nota: PyMeshLab pot no tenir suport directe per FBX en totes les versions
+            # Try to export to FBX
+            # Note: PyMeshLab may not have direct support for FBX in all versions
             try:
                 ms.save_current_mesh(output_path)
                 return True
             except Exception:
-                # Si FBX no està suportat, exportar com a OBJ i retornar False
+                # If FBX is not supported, export as OBJ and return False
                 obj_path = output_path.replace('.fbx', '_pymeshlab.obj')
                 ms.save_current_mesh(obj_path)
-                print(f"        ⚠ PyMeshLab no suporta FBX, guardat com: {obj_path}")
+                print(f"        ⚠ PyMeshLab does not support FBX, saved as: {obj_path}")
                 return False
             
         except Exception as e:
-            print(f"        ✗ Error amb PyMeshLab: {e}")
+            print(f"        ✗ Error with PyMeshLab: {e}")
             return False
     
     def _export_to_fbx_open3d(self, input_path, output_path):
-        """Exporta a FBX utilitzant Open3D com a preprocessor"""
+        """Exports to FBX using Open3D as a preprocessor"""
         try:
             import open3d as o3d
             
-            # Carregar malla
+            # Load mesh
             if input_path.endswith('.obj'):
                 mesh = o3d.io.read_triangle_mesh(input_path)
             elif input_path.endswith('.ply'):
                 mesh = o3d.io.read_triangle_mesh(input_path)
             else:
-                print(f"        ✗ Format no suportat per Open3D: {input_path}")
+                print(f"        ✗ Format not supported by Open3D: {input_path}")
                 return False
             
             if len(mesh.vertices) == 0:
-                print(f"        ✗ Malla buida carregada per Open3D")
+                print(f"        ✗ Empty mesh loaded by Open3D")
                 return False
             
-            # Aplicar neteja i optimització
+            # Apply cleaning and optimization
             mesh.remove_duplicated_vertices()
             mesh.remove_degenerate_triangles()
             mesh.remove_unreferenced_vertices()
             mesh.remove_non_manifold_edges()
             
-            # Calcular normals si no existeixen
+            # Calculate normals if they don't exist
             if not mesh.has_vertex_normals():
                 mesh.compute_vertex_normals()
             
-            # Open3D no suporta FBX directament, així que guardem com a OBJ temporal
-            # i després utilitzem bpy per convertir
+            # Open3D does not support FBX directly, so we save as a temporary OBJ
+            # and then use bpy to convert
             temp_obj = output_path.replace('.fbx', '_temp_o3d.obj')
             
             success = o3d.io.write_triangle_mesh(temp_obj, mesh)
             
             if success and 'bpy' in self.fbx_methods:
-                # Utilitzar bpy per convertir l'OBJ netejat a FBX
+                # Use bpy to convert the cleaned OBJ to FBX
                 fbx_success = self._export_to_fbx_bpy(temp_obj, output_path)
                 
-                # Netejar fitxer temporal
+                # Clean up temporary file
                 if os.path.exists(temp_obj):
                     os.remove(temp_obj)
                 
                 return fbx_success
             else:
-                print(f"        ⚠ Open3D ha processat però no pot convertir a FBX")
+                print(f"        ⚠ Open3D processed but cannot convert to FBX")
                 return False
             
         except Exception as e:
-            print(f"        ✗ Error amb Open3D: {e}")
+            print(f"        ✗ Error with Open3D: {e}")
             return False
     
     def _convert_to_fbx(self, input_path, output_path):
-        """Converteix qualsevol format suportat a FBX"""
-        print(f"      Convertint a FBX: {os.path.basename(output_path)}")
+        """Converts any supported format to FBX"""
+        print(f"      Converting to FBX: {os.path.basename(output_path)}")
         
-        # Provar diferents mètodes en ordre de preferència
+        # Try different methods in order of preference
         methods = []
         
         if 'bpy' in self.fbx_methods:
@@ -459,48 +459,48 @@ class HunyuanBatchProcessor:
         
         for method_name, method_func in methods:
             try:
-                print(f"        Provant {method_name}...")
+                print(f"        Trying {method_name}...")
                 if method_func(input_path, output_path):
-                    print(f"        ✓ Conversió exitosa amb {method_name}")
+                    print(f"        ✓ Successful conversion with {method_name}")
                     return True
                 else:
-                    print(f"        ✗ Fallida amb {method_name}")
+                    print(f"        ✗ Failed with {method_name}")
             except Exception as e:
-                print(f"        ✗ Error amb {method_name}: {e}")
+                print(f"        ✗ Error with {method_name}: {e}")
         
-        print(f"        ✗ No s'ha pogut convertir a FBX")
+        print(f"        ✗ Could not convert to FBX")
         return False
     
     def export_mesh(self, mesh, save_folder, textured=False, file_type='glb'):
-        """Exporta la malla seguint el format de gradio_app.py amb suport FBX"""
+        """Exports the mesh following the format of gradio_app.py with FBX support"""
         if textured:
             base_filename = 'textured_mesh'
         else:
             base_filename = 'white_mesh'
         
-        # Per FBX, primer exportem a un format intermedi (OBJ)
+        # For FBX, we first export to an intermediate format (OBJ)
         if file_type.lower() == 'fbx':
-            # Exportar primer a OBJ
+            # Export to OBJ first
             temp_obj_path = os.path.join(save_folder, f'{base_filename}_temp.obj')
             mesh.export(temp_obj_path, include_normals=textured)
             
-            # Convertir a FBX
+            # Convert to FBX
             final_path = os.path.join(save_folder, f'{base_filename}.fbx')
             
             if self._convert_to_fbx(temp_obj_path, final_path):
-                # Netejar fitxer temporal
+                # Clean up temporary file
                 if os.path.exists(temp_obj_path):
                     os.remove(temp_obj_path)
                 return final_path
             else:
-                # Si falla la conversió, mantenir l'OBJ
+                # If conversion fails, keep the OBJ
                 final_path = temp_obj_path.replace('_temp.obj', '.obj')
                 if os.path.exists(temp_obj_path):
                     os.rename(temp_obj_path, final_path)
-                print(f"        ⚠ FBX no disponible, guardat com OBJ: {final_path}")
+                print(f"        ⚠ FBX not available, saved as OBJ: {final_path}")
                 return final_path
         else:
-            # Formats normals (OBJ, GLB, PLY, etc.)
+            # Normal formats (OBJ, GLB, PLY, etc.)
             path = os.path.join(save_folder, f'{base_filename}.{file_type}')
             
             if file_type not in ['glb', 'obj']:
@@ -512,12 +512,12 @@ class HunyuanBatchProcessor:
     
     def _gen_shape(self, image=None, caption=None, save_folder=None, **kwargs):
         """
-        Generació de forma 3D seguint exactament la lògica de gradio_app.py
+        3D shape generation following exactly the logic of gradio_app.py
         """
         if image is None and caption is None:
-            raise ValueError("Cal proporcionar una imatge o un caption")
+            raise ValueError("An image or a caption must be provided")
         
-        # Configurar paràmetres per defecte
+        # Configure default parameters
         steps = kwargs.get('steps', 30)
         guidance_scale = kwargs.get('guidance_scale', 7.5)
         seed = kwargs.get('seed', 1234)
@@ -542,19 +542,19 @@ class HunyuanBatchProcessor:
         }
         time_meta = {}
         
-        # Text to image si és necessari
+        # Text to image if necessary
         if image is None and caption is not None:
             if self.t2i_worker is None:
-                raise ValueError("Text-to-image no està disponible")
+                raise ValueError("Text-to-image is not available")
             start_time = time.time()
             image = self.t2i_worker(caption)
             time_meta['text2image'] = time.time() - start_time
         
-        # Guardar imatge d'entrada
+        # Save input image
         if save_folder:
             image.save(os.path.join(save_folder, 'input.png'))
         
-        # Remove background si és necessari
+        # Remove background if necessary
         if check_box_rembg or image.mode == "RGB":
             start_time = time.time()
             image = self.rmbg_worker(image.convert('RGB'))
@@ -563,7 +563,7 @@ class HunyuanBatchProcessor:
             if save_folder:
                 image.save(os.path.join(save_folder, 'rembg.png'))
         
-        # Generació de forma 3D
+        # 3D shape generation
         start_time = time.time()
         generator = torch.Generator()
         generator = generator.manual_seed(int(seed))
@@ -579,12 +579,12 @@ class HunyuanBatchProcessor:
         )
         time_meta['shape_generation'] = time.time() - start_time
         
-        # Exportar a trimesh
+        # Export to trimesh
         tmp_start = time.time()
         mesh = self.modules['export_to_trimesh'](outputs)[0]
         time_meta['export_to_trimesh'] = time.time() - tmp_start
         
-        # Estadístiques
+        # Statistics
         stats['number_of_faces'] = mesh.faces.shape[0]
         stats['number_of_vertices'] = mesh.vertices.shape[0]
         stats['time'] = time_meta
@@ -593,96 +593,96 @@ class HunyuanBatchProcessor:
     
     def process_single_image(self, image_path, file_type, **kwargs):
         """
-        Processa una sola imatge seguint el pipeline complet
+        Processes a single image following the complete pipeline
         """
         image_name = Path(image_path).stem
-        print(f"\nProcessant: {image_name}")
+        print(f"\nProcessing: {image_name}")
         
         save_folder = self.gen_save_folder(image_name)
         
         try:
             start_time_total = time.time()
             
-            # Carregar imatge
-            print("  1. Carregant imatge...")
+            # Load image
+            print("  1. Loading image...")
             image = Image.open(image_path).convert('RGBA')
             
-            # Redimensionar si és necessari (Hunyuan3D espera 512x512)
+            # Resize if necessary (Hunyuan3D expects 512x512)
             if image.size != (512, 512):
                 image = image.resize((512, 512), Image.Resampling.LANCZOS)
             
-            # Generació de forma
-            print("  2. Generant forma 3D...")
+            # Shape generation
+            print("  2. Generating 3D shape...")
             mesh, processed_image, stats = self._gen_shape(
                 image=image,
                 save_folder=save_folder,
                 **kwargs
             )
             
-            # Exportar malla blanca inicial
+            # Export initial white mesh
             white_mesh_path = self.export_mesh(mesh, save_folder, textured=False, file_type=file_type)
-            print(f"    ✓ Malla inicial: {white_mesh_path}")
+            print(f"    ✓ Initial mesh: {white_mesh_path}")
             
-            # Post-processament exacte com gradio_app.py
-            print("  3. Post-processament...")
+            # Post-processing exactly like gradio_app.py
+            print("  3. Post-processing...")
             tmp_time = time.time()
             
-            # Comentat a gradio_app.py, però aquí ho fem per netejar
+            # Commented in gradio_app.py, but we do it here to clean up
             mesh = self.floater_remove_worker(mesh)
             mesh = self.degenerate_face_remove_worker(mesh)
             
-            # Reducció de cares
+            # Face reduction
             mesh = self.face_reduce_worker(mesh)
             stats['time']['face_reduction'] = time.time() - tmp_time
             
-            # Exportar malla netejada
+            # Export cleaned mesh
             cleaned_mesh_path = self.export_mesh(mesh, save_folder, textured=False, file_type=file_type)
-            print(f"    ✓ Malla netejada: {cleaned_mesh_path}")
+            print(f"    ✓ Cleaned mesh: {cleaned_mesh_path}")
             
-            # Texturització si està disponible
+            # Texturing if available
             textured_mesh_path = None
             if self.texgen_worker is not None:
-                print("  4. Generant textura...")
+                print("  4. Generating texture...")
                 tmp_time = time.time()
                 textured_mesh = self.texgen_worker(mesh, processed_image)
                 stats['time']['texture_generation'] = time.time() - tmp_time
                 
                 textured_mesh_path = self.export_mesh(textured_mesh, save_folder, textured=True, file_type=file_type)
-                print(f"    ✓ Malla texturitzada: {textured_mesh_path}")
+                print(f"    ✓ Textured mesh: {textured_mesh_path}")
             else:
-                print("    ⚠ Texturització no disponible")
+                print("    ⚠ Texturing not available")
             
-            # Temps total
+            # Total time
             stats['time']['total'] = time.time() - start_time_total
             
-            # Guardar estadístiques
+            # Save statistics
             stats_path = os.path.join(save_folder, 'stats.json')
             with open(stats_path, 'w') as f:
                 json.dump(stats, f, indent=2)
             
-            # Generar preview
+            # Generate preview
             self._generate_preview(mesh, save_folder, image_name)
             
-            # Netejar VRAM si està activat
+            # Clean VRAM if activated
             if self.args.low_vram_mode:
                 torch.cuda.empty_cache()
             
-            print(f"  ✓ Completat en {stats['time']['total']:.2f}s")
+            print(f"  ✓ Completed in {stats['time']['total']:.2f}s")
             return True, save_folder, stats
             
         except Exception as e:
-            print(f"  ✗ Error processant {image_name}: {str(e)}")
+            print(f"  ✗ Error processing {image_name}: {str(e)}")
             return False, None, None
     
     def _generate_preview(self, mesh, save_folder, name):
-        """Genera imatges de preview del model 3D"""
+        """Generates preview images of the 3D model"""
         try:
-            print("  5. Generant preview...")
+            print("  5. Generating preview...")
             
-            # Crear escena
+            # Create scene
             scene = mesh.scene()
             
-            # Vistes predefinides
+            # Predefined views
             views = {
                 'front': [0, 0, 2],
                 'side': [2, 0, 0],
@@ -699,38 +699,38 @@ class HunyuanBatchProcessor:
                 with open(preview_path, 'wb') as f:
                     f.write(png)
             
-            print(f"    ✓ Previews guardats")
+            print(f"    ✓ Previews saved")
             
         except Exception as e:
-            print(f"    ⚠ Error generant preview: {str(e)}")
+            print(f"    ⚠ Error generating preview: {str(e)}")
     
     def process_folder(self, input_folder, file_type):
         """
-        Processa totes les imatges d'una carpeta
+        Processes all images in a folder
         """
-        # Formats suportats
+        # Supported formats
         supported_formats = ['.jpg', '.jpeg', '.png', '.bmp', '.webp', '.tiff']
         
-        # Trobar totes les imatges
+        # Find all images
         image_files = []
         for fmt in supported_formats:
             image_files.extend(Path(input_folder).glob(f'*{fmt}'))
             image_files.extend(Path(input_folder).glob(f'*{fmt.upper()}'))
         
         if not image_files:
-            print(f"No s'han trobat imatges a: {input_folder}")
+            print(f"No images found in: {input_folder}")
             return
         
-        print(f"\nS'han trobat {len(image_files)} imatges per processar")
+        print(f"\nFound {len(image_files)} images to process")
         print("=" * 80)
         
-        # Estadístiques globals
+        # Global statistics
         processed = 0
         errors = 0
         total_time = 0
         results = []
         
-        # Configurar paràmetres de generació
+        # Configure generation parameters
         generation_params = {
             'steps': self.args.steps,
             'guidance_scale': self.args.guidance_scale,
@@ -740,8 +740,8 @@ class HunyuanBatchProcessor:
             'num_chunks': self.args.num_chunks
         }
         
-        # Processar cada imatge
-        for i, image_path in enumerate(tqdm(image_files, desc="Processant imatges")):
+        # Process each image
+        for i, image_path in enumerate(tqdm(image_files, desc="Processing images")):
             success, save_folder, stats = self.process_single_image(
                 str(image_path), 
                 file_type,
@@ -759,17 +759,17 @@ class HunyuanBatchProcessor:
             else:
                 errors += 1
         
-        # Resum final
+        # Final summary
         print("\n" + "=" * 80)
-        print(f"\nResum del processament:")
-        print(f"  - Total imatges: {len(image_files)}")
-        print(f"  - Processades correctament: {processed}")
+        print(f"\nProcessing summary:")
+        print(f"  - Total images: {len(image_files)}")
+        print(f"  - Processed successfully: {processed}")
         print(f"  - Errors: {errors}")
-        print(f"  - Temps total: {total_time:.2f}s")
-        print(f"  - Temps mitjà per imatge: {total_time/max(processed, 1):.2f}s")
-        print(f"  - Resultats guardats a: {self.output_dir}")
+        print(f"  - Total time: {total_time:.2f}s")
+        print(f"  - Average time per image: {total_time/max(processed, 1):.2f}s")
+        print(f"  - Results saved to: {self.output_dir}")
         
-        # Guardar resum global
+        # Save global summary
         summary = {
             'total_images': len(image_files),
             'processed': processed,
@@ -784,127 +784,127 @@ class HunyuanBatchProcessor:
         with open(summary_path, 'w') as f:
             json.dump(summary, f, indent=2)
         
-        print(f"  - Resum detallat: {summary_path}")
+        print(f"  - Detailed summary: {summary_path}")
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Hunyuan3D-2 Processor - Genera models 3D amb textura (una imatge o carpeta completa)',
+        description='Hunyuan3D-2 Processor - Generates 3D models with texture (single image or full folder)',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Exemples d'ús:
+Usage examples:
 
-  Processar una imatge individual:
-    python script.py imatge.png
-    python script.py imatge.jpg --file_type fbx
-    python script.py imatge.png --disable_tex --steps 10
+  Process a single image:
+    python script.py image.png
+    python script.py image.jpg --file_type fbx
+    python script.py image.png --disable_tex --steps 10
 
-  Processar una carpeta sencera:
-    python script.py /carpeta/imatges/
-    python script.py /carpeta/imatges/ --file_type fbx --low_vram_mode
+  Process an entire folder:
+    python script.py /path/to/images/
+    python script.py /path/to/images/ --file_type fbx --low_vram_mode
 
-  Opcions avançades:
-    python script.py imatge.png --octree_resolution 384 --steps 50
-    python script.py /carpeta/ --enable_flashvdm --compile
+  Advanced options:
+    python script.py image.png --octree_resolution 384 --steps 50
+    python script.py /folder/ --enable_flashvdm --compile
         """
     )
     
-    # Argument principal - pot ser imatge o carpeta
+    # Main argument - can be an image or a folder
     parser.add_argument('input', 
-                       help='Imatge individual (.jpg, .png, etc.) o carpeta amb imatges')
+                       help='Single image (.jpg, .png, etc.) or folder with images')
     parser.add_argument('-o', '--output', default='output_hunyuan3d', 
-                       help='Carpeta de sortida (per defecte: output_hunyuan3d)')
+                       help='Output folder (default: output_hunyuan3d)')
     
-    # Arguments del model (seguint gradio_app.py)
+    # Model arguments (following gradio_app.py)
     parser.add_argument("--model_path", type=str, default='tencent/Hunyuan3D-2mini')
     parser.add_argument("--subfolder", type=str, default='hunyuan3d-dit-v2-mini-turbo')
     parser.add_argument("--texgen_model_path", type=str, default='tencent/Hunyuan3D-2')
     parser.add_argument('--device', type=str, default='cuda', 
-                       help='Dispositiu (cuda, cpu, etc.)')
+                       help='Device (cuda, cpu, etc.)')
     parser.add_argument('--mc_algo', type=str, default='mc')
     
-    # Optimitzacions
+    # Optimizations
     parser.add_argument('--enable_t23d', action='store_true',
-                       help='Activa text-to-3D')
+                       help='Enable text-to-3D')
     parser.add_argument('--disable_tex', action='store_true',
-                       help='Desactiva generació de textures')
+                       help='Disable texture generation')
     parser.add_argument('--enable_flashvdm', action='store_true',
-                       help='Activa FlashVDM per accelerar')
+                       help='Enable FlashVDM for acceleration')
     parser.add_argument('--compile', action='store_true',
-                       help='Compila el model per accelerar')
+                       help='Compile the model for acceleration')
     parser.add_argument('--low_vram_mode', action='store_true',
-                       help='Mode baix consum VRAM')
+                       help='Low VRAM consumption mode')
     
-    # Paràmetres de generació
+    # Generation parameters
     parser.add_argument('--steps', type=int, default=30,
-                       help='Passos d\'inferència')
+                       help='Inference steps')
     parser.add_argument('--guidance_scale', type=float, default=7.5,
-                       help='Escala de guidance')
+                       help='Guidance scale')
     parser.add_argument('--seed', type=int, default=1234,
-                       help='Seed per reproducibilitat')
+                       help='Seed for reproducibility')
     parser.add_argument('--octree_resolution', type=int, default=256,
-                       help='Resolució d\'octree')
+                       help='Octree resolution')
     parser.add_argument('--num_chunks', type=int, default=200000,
-                       help='Número de chunks')
+                       help='Number of chunks')
     parser.add_argument('--file_type', type=str, default='obj', 
                        choices=['obj', 'glb', 'ply', 'stl', 'fbx'],
-                       help='Tipus de fitxer de sortida (obj, glb, ply, stl, fbx)')
+                       help='Output file type (obj, glb, ply, stl, fbx)')
     
     args = parser.parse_args()
     
-    # Determinar si l'entrada és imatge o carpeta
+    # Determine if the input is an image or a folder
     input_path = Path(args.input)
     
     if not input_path.exists():
-        print(f"Error: '{args.input}' no existeix.")
+        print(f"Error: '{args.input}' does not exist.")
         sys.exit(1)
     
     is_single_image = input_path.is_file() and is_image_file(input_path)
     is_folder = input_path.is_dir()
     
     if not is_single_image and not is_folder:
-        print(f"Error: '{args.input}' no és una imatge vàlida ni una carpeta.")
-        print("Formats suportats: .jpg, .jpeg, .png, .bmp, .webp, .tiff")
+        print(f"Error: '{args.input}' is not a valid image or folder.")
+        print("Supported formats: .jpg, .jpeg, .png, .bmp, .webp, .tiff")
         sys.exit(1)
     
-    # Verificacions de sistema
+    # System checks
     if 'cuda' in args.device and not torch.cuda.is_available():
-        print("Error: CUDA no està disponible. Utilitza --device cpu")
+        print("Error: CUDA is not available. Use --device cpu")
         sys.exit(1)
     
-    # Verificació FBX
+    # FBX check
     if args.file_type.lower() == 'fbx':
-        print("Note: Format FBX seleccionat. Verificant dependències...")
+        print("Note: FBX format selected. Verifying dependencies...")
         try:
             import bpy
-            print("  ✓ Blender Python API (bpy) disponible")
+            print("  ✓ Blender Python API (bpy) available")
         except ImportError:
-            print("  ✗ bpy no disponible. Instal·la amb: pip install bpy")
-            print("     O prova amb altres dependències: pip install pymeshlab open3d")
+            print("  ✗ bpy not available. Install with: pip install bpy")
+            print("     Or try with other dependencies: pip install pymeshlab open3d")
     
-    # Informació inicial
+    # Initial information
     print("Hunyuan3D-2 Processor")
     print("=" * 50)
     if is_single_image:
-        print(f"Mode: Imatge individual")
-        print(f"Entrada: {args.input}")
+        print(f"Mode: Single image")
+        print(f"Input: {args.input}")
     else:
-        print(f"Mode: Processament en lot")
-        print(f"Carpeta: {args.input}")
+        print(f"Mode: Batch processing")
+        print(f"Folder: {args.input}")
     
-    print(f"Sortida: {args.output}")
+    print(f"Output: {args.output}")
     print(f"Format: {args.file_type.upper()}")
     print(f"Model: {args.model_path}/{args.subfolder}")
-    print(f"Dispositiu: {args.device}")
-    print(f"Texturització: {'Desactivada' if args.disable_tex else 'Activada'}")
-    print(f"Mode baix VRAM: {'Sí' if args.low_vram_mode else 'No'}")
+    print(f"Device: {args.device}")
+    print(f"Texturing: {'Disabled' if args.disable_tex else 'Enabled'}")
+    print(f"Low VRAM mode: {'Yes' if args.low_vram_mode else 'No'}")
     print()
     
-    # Crear i executar processador
+    # Create and run processor
     processor = HunyuanBatchProcessor(args)
     
     if is_single_image:
-        # Processar imatge individual
-        print("Processant imatge individual...")
+        # Process single image
+        print("Processing single image...")
         
         generation_params = {
             'steps': args.steps,
@@ -922,20 +922,20 @@ Exemples d'ús:
         )
         
         if success:
-            print(f"\n🎉 Imatge processada correctament!")
-            print(f"📁 Resultats guardats a: {save_folder}")
-            print(f"⏱️  Temps total: {stats['time']['total']:.2f}s")
+            print(f"\n🎉 Image processed successfully!")
+            print(f"📁 Results saved to: {save_folder}")
+            print(f"⏱️  Total time: {stats['time']['total']:.2f}s")
             
-            # Mostrar fitxers generats
+            # Show generated files
             generated_files = list(Path(save_folder).glob('*'))
-            print(f"\n📋 Fitxers generats:")
+            print(f"\n📋 Generated files:")
             for file in sorted(generated_files):
                 print(f"   - {file.name}")
         else:
-            print(f"\n❌ Error processant la imatge: {args.input}")
+            print(f"\n❌ Error processing the image: {args.input}")
             sys.exit(1)
     else:
-        # Processar carpeta
+        # Process folder
         processor.process_folder(str(input_path), args.file_type)
 
 if __name__ == "__main__":

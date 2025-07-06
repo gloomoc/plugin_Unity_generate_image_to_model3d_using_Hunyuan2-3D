@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Hunyuan3D.Editor
 {
     /// <summary>
-    /// Utilidad para ejecutar código en el hilo principal de Unity desde hilos secundarios
+    /// Utility to execute code on the main Unity thread from secondary threads
     /// </summary>
     public static class MainThreadExecutor
     {
@@ -20,7 +20,7 @@ namespace Hunyuan3D.Editor
         private static bool _isInitialized = false;
 
         /// <summary>
-        /// Inicializa el executor, configurando el callback necesario
+        /// Initializes the executor, setting up the necessary callback
         /// </summary>
         private static void Initialize()
         {
@@ -32,9 +32,9 @@ namespace Hunyuan3D.Editor
         }
 
         /// <summary>
-        /// Ejecuta una acción en el hilo principal de Unity
+        /// Executes an action on the main Unity thread
         /// </summary>
-        /// <param name="action">Acción a ejecutar</param>
+        /// <param name="action">Action to execute</param>
         public static void RunOnMainThread(Action action)
         {
             if (action == null)
@@ -48,12 +48,12 @@ namespace Hunyuan3D.Editor
         }
 
         /// <summary>
-        /// Procesa las acciones encoladas para ejecutar en el hilo principal
-        /// Este método es llamado por EditorApplication.update
+        /// Processes the queued actions to execute on the main thread
+        /// This method is called by EditorApplication.update
         /// </summary>
         private static void Update()
         {
-            // Ejecutar todas las acciones encoladas
+            // Execute all queued actions
             lock (_lock)
             {
                 while (_executeOnMainThread.Count > 0)
@@ -65,7 +65,7 @@ namespace Hunyuan3D.Editor
                     }
                     catch (Exception ex)
                     {
-                        UnityEngine.Debug.LogError($"Error ejecutando acción en hilo principal: {ex.Message}");
+                        UnityEngine.Debug.LogError($"Error executing action on main thread: {ex.Message}");
                     }
                 }
             }
@@ -85,15 +85,15 @@ namespace Hunyuan3D.Editor
         private float progress = 0f;
         private Vector2 scrollPosition = Vector2.zero;
         private List<string> logMessages = new List<string>();        
-        private Vector2 dependencyScrollPosition = Vector2.zero; // Afegir aquesta línia        
+        private Vector2 dependencyScrollPosition = Vector2.zero; // Add this line        
 
-        // Configuració
+        // Configuration
         private string pythonPath = "python";
         private string pipPath = "pip3";
         private bool useCondaEnv = false;
         private string condaEnvName = "hunyuan3d";
 
-        // Estat de dependències
+        // Dependency Status
         private Dictionary<string, DependencyStatus> dependencyStatus = new Dictionary<string, DependencyStatus>();
         private bool pythonVersionOK = false;
         private bool torchInstalled = false;
@@ -106,7 +106,7 @@ namespace Hunyuan3D.Editor
         private string detectedCudaToolkitVersion = "";
         private string recommendedCudaVersion = "";
 
-        // Llistes de dependències segons documentació oficial
+        // Dependency lists according to official documentation
         private readonly string[] coreDependencies = {
             "torch>=1.13.0",
             "torchvision",
@@ -179,13 +179,13 @@ namespace Hunyuan3D.Editor
         private void Initialize()
         {
             DetectPythonPath();
-            AddLogMessage("Gestor de dependències Hunyuan3D inicialitzat.");
-            AddLogMessage("Basat en la documentació oficial: https://github.com/Tencent-Hunyuan/Hunyuan3D-2");
+            AddLogMessage("Hunyuan3D dependency manager initialized.");
+            AddLogMessage("Based on the official documentation: https://github.com/Tencent-Hunyuan/Hunyuan3D-2");
         }
 
         private void DetectPythonPath()
         {
-            // Intentar detectar Python automàticament
+            // Try to detect Python automatically
             string[] possiblePaths = {
                 "python",
                 "python3",
@@ -204,7 +204,7 @@ namespace Hunyuan3D.Editor
                 if (TestPythonPath(path))
                 {
                     pythonPath = path;
-                    AddLogMessage($"Python detectat: {path}");
+                    AddLogMessage($"Python detected: {path}");
                     break;
                 }
             }
@@ -226,7 +226,7 @@ namespace Hunyuan3D.Editor
 
                 using (var process = Process.Start(startInfo))
                 {
-                    process.WaitForExit(3000); // 3 segons timeout
+                    process.WaitForExit(3000); // 3 seconds timeout
                     return process.ExitCode == 0;
                 }
             }
@@ -271,21 +271,21 @@ namespace Hunyuan3D.Editor
             }
             if (GUILayout.Button("...", GUILayout.Width(30)))
             {
-                string path = EditorUtility.OpenFilePanel("Seleccionar Python", "", "exe");
+                string path = EditorUtility.OpenFilePanel("Select Python", "", "exe");
                 if (!string.IsNullOrEmpty(path))
                     pythonPath = path;
             }
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
-            useCondaEnv = EditorGUILayout.Toggle("Usar Conda Environment:", useCondaEnv);
+            useCondaEnv = EditorGUILayout.Toggle("Use Conda Environment:", useCondaEnv);
             if (useCondaEnv)
             {
-                condaEnvName = EditorGUILayout.TextField("Nom Environment:", condaEnvName);
+                condaEnvName = EditorGUILayout.TextField("Environment Name:", condaEnvName);
             }
             EditorGUILayout.EndHorizontal();
 
-            // Mostrar informació detectada
+            // Show detected information
             if (!string.IsNullOrEmpty(detectedPythonVersion))
             {
                 Color originalColor = GUI.color;
@@ -321,7 +321,7 @@ namespace Hunyuan3D.Editor
 
             if (!string.IsNullOrEmpty(recommendedCudaVersion))
             {
-                EditorGUILayout.HelpBox($"Recomanat: {recommendedCudaVersion}", MessageType.Info);
+                EditorGUILayout.HelpBox($"Recommended: {recommendedCudaVersion}", MessageType.Info);
             }
         }
 
@@ -334,16 +334,16 @@ namespace Hunyuan3D.Editor
             switch (selectedInstallMode)
             {
                 case InstallationMode.CPU:
-                    EditorGUILayout.HelpBox("Mode CPU: Instal·larà PyTorch optimitzat per CPU. Més lent però compatible universalment.", MessageType.Info);
+                    EditorGUILayout.HelpBox("CPU Mode: Will install PyTorch optimized for CPU. Slower but universally compatible.", MessageType.Info);
                     break;
                 case InstallationMode.CUDA11:
-                    EditorGUILayout.HelpBox("Mode CUDA 11.x: Per targetes gràfiques NVIDIA amb drivers CUDA 11.x.", MessageType.Info);
+                    EditorGUILayout.HelpBox("CUDA 11.x Mode: For NVIDIA graphics cards with CUDA 11.x drivers.", MessageType.Info);
                     break;
                 case InstallationMode.CUDA12:
-                    EditorGUILayout.HelpBox("Mode CUDA 12.x: Per targetes gràfiques NVIDIA amb drivers CUDA 12.x més recents.", MessageType.Info);
+                    EditorGUILayout.HelpBox("CUDA 12.x Mode: For NVIDIA graphics cards with more recent CUDA 12.x drivers.", MessageType.Info);
                     break;
                 case InstallationMode.Auto:
-                    EditorGUILayout.HelpBox("Mode Automàtic: Detectarà el millor mode segons el sistema.", MessageType.Info);
+                    EditorGUILayout.HelpBox("Automatic Mode: Will detect the best mode based on the system.", MessageType.Info);
                     break;
             }
         }
@@ -370,7 +370,7 @@ namespace Hunyuan3D.Editor
 
             EditorGUILayout.EndHorizontal();
 
-            // Nova secció per instal·lació Windows
+            // New section for Windows installation
             if (Application.platform == RuntimePlatform.WindowsEditor)
             {
                 EditorGUILayout.Space(5);
@@ -389,7 +389,7 @@ namespace Hunyuan3D.Editor
                 EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.HelpBox(
-                    "Mètode recomanat per Windows: Usa UV per instal·lació ràpida i gestió eficient de dependències.",
+                    "Recommended method for Windows: Uses UV for fast installation and efficient dependency management.",
                     MessageType.Info
                 );
             }
@@ -403,16 +403,16 @@ namespace Hunyuan3D.Editor
 
             if (GUILayout.Button("Install Hunyuan3D Package", GUILayout.Height(25)))
             {
-                // Oferir opcions d'instal·lació millorades per Windows
+                // Offer improved installation options for Windows
                 int choice = EditorUtility.DisplayDialogComplex(
-                    "Mètode d'Instal·lació",
-                    "Tria el mètode d'instal·lació:\n\n" +
-                    "• UV (Recomanat): Mètode ràpid i optimitzat per Windows\n" +
-                    "• Pip Estàndard: Mètode tradicional amb pip\n" +
-                    "• Cancel·lar: Sortir sense instal·lar",
-                    "UV (Recomanat)",
-                    "Pip Estàndard",
-                    "Cancel·lar"
+                    "Installation Method",
+                    "Choose the installation method:\n\n" +
+                    "• UV (Recommended): Fast and optimized method for Windows\n" +
+                    "• Standard Pip: Traditional method with pip\n" +
+                    "• Cancel: Exit without installing",
+                    "UV (Recommended)",
+                    "Standard Pip",
+                    "Cancel"
                 );
 
                 switch (choice)
@@ -425,14 +425,14 @@ namespace Hunyuan3D.Editor
                         Task.Run(() => InstallHunyuan3DPackage());
                         break;
                     default: // Cancel
-                        AddLogMessage("⏹ Instal·lació cancel·lada per l'usuari");
+                        AddLogMessage("⏹ Installation cancelled by user");
                         break;
                 }
             }
 
             EditorGUILayout.EndHorizontal();
 
-            // Botons específics per CUDA i PyTorch
+            // Specific buttons for CUDA and PyTorch
             EditorGUILayout.LabelField("CUDA and PyTorch Installation", EditorStyles.boldLabel);
             EditorGUILayout.BeginHorizontal();
 
@@ -483,15 +483,15 @@ namespace Hunyuan3D.Editor
         {
             EditorGUILayout.LabelField("Dependencies Status", EditorStyles.boldLabel);
 
-            // Crear un ScrollView amb altura fixa per limitar l'espai vertical
-            EditorGUILayout.BeginVertical(GUILayout.MaxHeight(150)); // Limitar altura a 150 píxels
+            // Create a ScrollView with fixed height to limit vertical space
+            EditorGUILayout.BeginVertical(GUILayout.MaxHeight(150)); // Limit height to 150 pixels
             dependencyScrollPosition = EditorGUILayout.BeginScrollView(dependencyScrollPosition);
 
             DrawDependencyGroup("Core (PyTorch, Diffusers)", coreDependencies);
-            DrawDependencyGroup("Processament de Malles", meshProcessingDependencies);
-            DrawDependencyGroup("Processament d'Imatges", imageDependencies);
-            DrawDependencyGroup("Utilitats", utilityDependencies);
-            DrawDependencyGroup("Opcionals (Gradio, FastAPI)", optionalDependencies);
+            DrawDependencyGroup("Mesh Processing", meshProcessingDependencies);
+            DrawDependencyGroup("Image Processing", imageDependencies);
+            DrawDependencyGroup("Utilities", utilityDependencies);
+            DrawDependencyGroup("Optional (Gradio, FastAPI)", optionalDependencies);
 
             EditorGUILayout.EndScrollView();
             EditorGUILayout.EndVertical();
@@ -510,7 +510,7 @@ namespace Hunyuan3D.Editor
 
                 EditorGUILayout.BeginHorizontal();
 
-                // Icona d'estat
+                // Status icon
                 string statusIcon = GetStatusIcon(status);
                 Color statusColor = GetStatusColor(status);
 
@@ -521,7 +521,7 @@ namespace Hunyuan3D.Editor
 
                 EditorGUILayout.LabelField(dep);
 
-                // Botó d'instal·lació individual
+                // Individual install button
                 if (status == DependencyStatus.NotInstalled)
                 {
                     if (GUILayout.Button("Install", GUILayout.Width(70)))
@@ -541,21 +541,21 @@ namespace Hunyuan3D.Editor
         {
             EditorGUILayout.LabelField("Installation Logs", EditorStyles.boldLabel);
 
-            // Convertir els missatges de log a un string únic 
+            // Convert log messages to a single string 
             string logContent = string.Join("\n", logMessages);
 
-            // Crear un estil personalitzat per al TextArea de només lectura
+            // Create a custom style for the read-only TextArea
             GUIStyle logStyle = new GUIStyle(EditorStyles.textArea)
             {
                 wordWrap = true,
                 richText = true
             };
 
-            // TextArea amb scroll que permet seleccionar i copiar text
+            // TextArea with scroll that allows selecting and copying text
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.Height(400));
 
-            // TextArea de només lectura que permet selecció
-            EditorGUI.BeginDisabledGroup(true); // Fa que sigui de només lectura però permet selecció
+            // Read-only TextArea that allows selection
+            EditorGUI.BeginDisabledGroup(true); // Makes it read-only but allows selection
             EditorGUILayout.TextArea(logContent, logStyle, GUILayout.ExpandHeight(true));
             EditorGUI.EndDisabledGroup();
 
@@ -592,7 +592,7 @@ namespace Hunyuan3D.Editor
                 case DependencyStatus.Installed: return Color.green;
                 case DependencyStatus.NotInstalled: return Color.red;
                 case DependencyStatus.Checking: return Color.yellow;
-                case DependencyStatus.Error: return new Color(1f, 0.5f, 0f); // Taronja
+                case DependencyStatus.Error: return new Color(1f, 0.5f, 0f); // Orange
                 default: return Color.gray;
             }
         }
@@ -603,20 +603,20 @@ namespace Hunyuan3D.Editor
         {
             isCheckingDependencies = true;
             progress = 0f;
-            statusMessage = "Comprovant dependències...";
+            statusMessage = "Checking dependencies...";
 
             try
             {
-                // Detectar si estem usant un venv
+                // Detect if we are using a venv
                 string venvPath = DetectVirtualEnvironment();
                 if (!string.IsNullOrEmpty(venvPath))
                 {
-                    AddLogMessage($"📁 Usant entorn virtual: {venvPath}");
+                    AddLogMessage($"📁 Using virtual environment: {venvPath}");
                     pythonPath = Path.Combine(venvPath, "Scripts", "python.exe");
                     pipPath = Path.Combine(venvPath, "Scripts", "pip.exe");
                 }
 
-                // Comprovar totes les dependències
+                // Check all dependencies
                 var allDependencies = coreDependencies
                     .Concat(meshProcessingDependencies)
                     .Concat(imageDependencies)
@@ -629,7 +629,7 @@ namespace Hunyuan3D.Editor
                     string dep = allDependencies[i];
                     string packageName = dep.Split(new char[] { '>', '<', '=', '!' })[0];
 
-                    statusMessage = $"Comprovant {packageName}...";
+                    statusMessage = $"Checking {packageName}...";
                     dependencyStatus[packageName] = DependencyStatus.Checking;
 
                     bool isInstalled = await CheckSingleDependency(packageName);
@@ -640,27 +640,27 @@ namespace Hunyuan3D.Editor
                     Repaint();
                 }
 
-                // Comprovar PyTorch i CUDA específicament
+                // Check PyTorch and CUDA specifically
                 await CheckTorchAndCuda();
 
-                // Comprovar CUDA Toolkit si estem en Windows i no està disponible
+                // Check CUDA Toolkit if on Windows and not available
                 if (!cudaAvailable && Application.platform == RuntimePlatform.WindowsEditor)
                 {
                     await DetectCudaInstallation();
                 }
 
-                statusMessage = "Comprovació completada!";
+                statusMessage = "Check complete!";
                 progress = 1f;
 
-                // Resum
+                // Summary
                 int installed = dependencyStatus.Values.Count(s => s == DependencyStatus.Installed);
                 int total = dependencyStatus.Count;
-                AddLogMessage($"Resum: {installed}/{total} dependències instal·lades.");
+                AddLogMessage($"Summary: {installed}/{total} dependencies installed.");
             
             }
             catch (Exception ex)
             {
-                AddLogMessage($"Error durant la comprovació: {ex.Message}");
+                AddLogMessage($"Error during check: {ex.Message}");
             }
             finally
             {
@@ -670,7 +670,7 @@ namespace Hunyuan3D.Editor
 
         private string DetectVirtualEnvironment()
         {
-            // Mateix codi que al Generator
+            // Same code as in Generator
             string[] possibleVenvPaths = {
                 Path.Combine(Application.dataPath, "UnityPlugin", "Scripts", ".venv"),
                 @"C:\Users\" + Environment.UserName + @"\AppData\Local\Temp\Hunyuan2-3D-for-windows\.venv"
@@ -701,7 +701,7 @@ namespace Hunyuan3D.Editor
                 if (output.Contains("Python"))
                 {
                     detectedPythonVersion = output.Trim();
-                    // Extreure número de versió
+                    // Extract version number
                     var versionMatch = System.Text.RegularExpressions.Regex.Match(output, @"Python (\d+)\.(\d+)");
                     if (versionMatch.Success)
                     {
@@ -711,11 +711,11 @@ namespace Hunyuan3D.Editor
 
                         if (pythonVersionOK)
                         {
-                            AddLogMessage($"✓ Python {major}.{minor} és compatible (mínim 3.8)");
+                            AddLogMessage($"✓ Python {major}.{minor} is compatible (minimum 3.8)");
                         }
                         else
                         {
-                            AddLogMessage($"✗ Python {major}.{minor} és massa antic (mínim 3.8)");
+                            AddLogMessage($"✗ Python {major}.{minor} is too old (minimum 3.8)");
                         }
                     }
                     return true;
@@ -723,7 +723,7 @@ namespace Hunyuan3D.Editor
             }
             catch (Exception ex)
             {
-                AddLogMessage($"Error comprovant Python: {ex.Message}");
+                AddLogMessage($"Error checking Python: {ex.Message}");
             }
 
             return false;
@@ -753,7 +753,7 @@ namespace Hunyuan3D.Editor
         {
             try
             {
-                // Comprovar PyTorch
+                // Check PyTorch
                 string torchCheck = "-c \"import torch; print('PyTorch version:', torch.__version__)\"";
                 string pythonCmd = useCondaEnv ? $"conda run -n {condaEnvName} python" : pythonPath;
 
@@ -763,7 +763,7 @@ namespace Hunyuan3D.Editor
                     detectedTorchVersion = torchOutput.Trim();
                     torchInstalled = true;
 
-                    // Comprovar CUDA
+                    // Check CUDA
                     string cudaCheck = "-c \"import torch; print('CUDA available:', torch.cuda.is_available()); print('CUDA version:', torch.version.cuda if torch.cuda.is_available() else 'N/A')\"";
                     var cudaOutput = await ExecuteCommand(pythonCmd, cudaCheck);
 
@@ -779,17 +779,17 @@ namespace Hunyuan3D.Editor
                                 break;
                             }
                         }
-                        AddLogMessage("✓ CUDA disponible per acceleració GPU");
+                        AddLogMessage("✓ CUDA available for GPU acceleration");
                     }
                     else
                     {
-                        AddLogMessage("⚠ CUDA no disponible - s'utilitzarà CPU");
+                        AddLogMessage("⚠ CUDA not available - will use CPU");
                     }
                 }
             }
             catch (Exception ex)
             {
-                AddLogMessage($"Error comprovant PyTorch/CUDA: {ex.Message}");
+                AddLogMessage($"Error checking PyTorch/CUDA: {ex.Message}");
             }
         }
 
@@ -797,11 +797,11 @@ namespace Hunyuan3D.Editor
         {
             try
             {
-                AddLogMessage("Verificant PyTorch i CUDA...");
+                AddLogMessage("Verifying PyTorch and CUDA...");
 
                 string pythonCmd = useCondaEnv ? $"conda run -n {condaEnvName} python" : pythonPath;
 
-                // Script per verificar PyTorch i CUDA
+                // Script to verify PyTorch and CUDA
                 string checkScript = @"-c ""
 import torch
 print('PyTorch version:', torch.__version__)
@@ -834,7 +834,7 @@ else:
                         else if (line.Contains("CUDA available: True"))
                         {
                             cudaAvailable = true;
-                            AddLogMessage("✓ CUDA està disponible per PyTorch");
+                            AddLogMessage("✓ CUDA is available for PyTorch");
                         }
                         else if (line.Contains("CUDA version:") && !line.Contains("N/A"))
                         {
@@ -848,18 +848,18 @@ else:
 
                     if (!cudaAvailable)
                     {
-                        AddLogMessage("⚠ PyTorch està en mode CPU");
+                        AddLogMessage("⚠ PyTorch is in CPU mode");
                     }
                 }
                 else
                 {
-                    AddLogMessage("⚠ No s'ha pogut verificar PyTorch");
+                    AddLogMessage("⚠ Could not verify PyTorch");
                     torchInstalled = false;
                 }
             }
             catch (Exception ex)
             {
-                AddLogMessage($"Error verificant PyTorch/CUDA: {ex.Message}");
+                AddLogMessage($"Error verifying PyTorch/CUDA: {ex.Message}");
                 torchInstalled = false;
                 cudaAvailable = false;
             }
@@ -867,7 +867,7 @@ else:
 
         private string GetImportName(string packageName)
         {
-            // Mapeig de noms de paquet pip a noms d'importació
+            // Mapping of pip package names to import names
             var mapping = new Dictionary<string, string>
             {
                 {"opencv-python", "cv2"},
@@ -886,89 +886,89 @@ else:
         {
             isInstalling = true;
             progress = 0f;
-            statusMessage = "Iniciant instal·lació completa...";
+            statusMessage = "Starting full installation...";
 
             try
             {
-                AddLogMessage("=== INICI INSTAL·LACIÓ HUNYUAN3D ===");
-                AddLogMessage("Basat en: https://github.com/Tencent-Hunyuan/Hunyuan3D-2");
+                AddLogMessage("=== STARTING HUNYUAN3D INSTALLATION ===");
+                AddLogMessage("Based on: https://github.com/Tencent-Hunyuan/Hunyuan3D-2");
 
-                // 1. Detectar i preparar CUDA si és necessari
+                // 1. Detect and prepare CUDA if necessary
                 progress = 0.05f;
-                statusMessage = "Detectant configuració CUDA...";
+                statusMessage = "Detecting CUDA configuration...";
                 await DetectCudaInstallation();
 
-                // Oferir instal·lació CUDA si no està disponible
+                // Offer CUDA installation if not available
                 if (!cudaToolkitInstalled && Application.platform == RuntimePlatform.WindowsEditor)
                 {
                     bool installCuda = EditorUtility.DisplayDialog(
-                        "CUDA no detectat",
-                        "No s'ha detectat CUDA Toolkit al sistema.\n" +
-                        "Vols instal·lar CUDA automàticament per acceleració GPU?\n\n" +
-                        "Recomanat: Sí (millor rendiment)\n" +
-                        "No: Continuarà amb mode CPU",
-                        "Instal·lar CUDA 12.1", "Continuar amb CPU"
+                        "CUDA not detected",
+                        "CUDA Toolkit was not detected on the system.\n" +
+                        "Do you want to install CUDA automatically for GPU acceleration?\n\n" +
+                        "Recommended: Yes (better performance)\n" +
+                        "No: Will continue with CPU mode",
+                        "Install CUDA 12.1", "Continue with CPU"
                     );
 
                     if (installCuda)
                     {
-                        statusMessage = "Instal·lant CUDA...";
+                        statusMessage = "Installing CUDA...";
                         await InstallCudaToolkit("12.1");
 
-                        // Actualitzar mode d'instal·lació
+                        // Update installation mode
                         selectedInstallMode = InstallationMode.CUDA12;
                     }
                     else
                     {
                         selectedInstallMode = InstallationMode.CPU;
-                        AddLogMessage("Continuant amb mode CPU...");
+                        AddLogMessage("Continuing with CPU mode...");
                     }
                 }
 
-                // 2. Instal·lar PyTorch primer (més important)
+                // 2. Install PyTorch first (most important)
                 progress = 0.1f;
-                statusMessage = "Instal·lant PyTorch...";
+                statusMessage = "Installing PyTorch...";
                 await InstallPyTorch();
 
-                // 2. Dependències core
+                // 2. Core dependencies
                 progress = 0.3f;
-                statusMessage = "Instal·lant dependències core...";
+                statusMessage = "Installing core dependencies...";
                 await InstallDependencyGroup(coreDependencies, "Core");
 
-                // 3. Dependències d'imatge
+                // 3. Image dependencies
                 progress = 0.5f;
-                statusMessage = "Instal·lant processament d'imatges...";
-                await InstallDependencyGroup(imageDependencies, "Imatge");
+                statusMessage = "Installing image processing...";
+                await InstallDependencyGroup(imageDependencies, "Image");
 
-                // 4. Dependències de malla
+                // 4. Mesh dependencies
                 progress = 0.7f;
-                statusMessage = "Instal·lant processament de malles...";
-                await InstallDependencyGroup(meshProcessingDependencies, "Malles");
+                statusMessage = "Installing mesh processing...";
+                await InstallDependencyGroup(meshProcessingDependencies, "Mesh");
 
-                // 5. Utilitats
+                // 5. Utilities
                 progress = 0.85f;
-                statusMessage = "Instal·lant utilitats...";
-                await InstallDependencyGroup(utilityDependencies, "Utilitats");
+                statusMessage = "Installing utilities...";
+                await InstallDependencyGroup(utilityDependencies, "Utilities");
 
-                // 6. Opcionals
+                // 6. Optional
                 progress = 0.95f;
-                statusMessage = "Instal·lant dependències opcionals...";
-                await InstallDependencyGroup(optionalDependencies, "Opcionals");
+                statusMessage = "Installing optional dependencies...";
+                await InstallDependencyGroup(optionalDependencies, "Optional");
 
-                // 7. Instal·lar el paquet Hunyuan3D
+                // 7. Install the Hunyuan3D package
                 progress = 0.98f;
-                statusMessage = "Instal·lant paquet Hunyuan3D...";
+                statusMessage = "Installing Hunyuan3D package...";
                 await InstallHunyuan3DPackage();
 
                 progress = 1f;
-                statusMessage = "Instal·lació completada!";
-                AddLogMessage("✓ Instal·lació completada amb èxit!");
-                AddLogMessage("Executa 'Comprovar Dependències' per verificar.");
+                statusMessage = "Installation complete!";
+                AddLogMessage("✓ Installation completed successfully!");
+                AddLogMessage("Run 'Check Dependencies' to verify.");
             }
             catch (Exception ex)
             {
-                AddLogMessage($"✗ Error durant la instal·lació: {ex.Message}");
-                statusMessage = "Error durant la instal·lació";
+                AddLogMessage($"✗ Error during installation: {ex.Message}");
+                statusMessage = "Error during installation";
             }
             finally
             {
@@ -992,10 +992,10 @@ else:
                     torchCommand = "torch torchvision --index-url https://download.pytorch.org/whl/cu121";
                     break;
                 case InstallationMode.Auto:
-                    // Detectar automàticament
+                    // Detect automatically
                     if (await DetectCudaCapability())
                     {
-                        torchCommand = "torch torchvision"; // Deixar que pip detecti
+                        torchCommand = "torch torchvision"; // Let pip detect
                     }
                     else
                     {
@@ -1009,37 +1009,37 @@ else:
 
         private async Task<bool> DetectCudaCapability()
         {
-            // Implementació intel·ligent de detecció CUDA
+            // Smart CUDA detection implementation
             try
             {
-                // Primer comprovar nvidia-smi
+                // First check nvidia-smi
                 string nvidiaSmiCheck = "nvidia-smi";
                 var output = await ExecuteCommand(nvidiaSmiCheck, "");
 
                 if (output.Contains("CUDA Version"))
                 {
-                    AddLogMessage("✓ Driver NVIDIA detectat");
+                    AddLogMessage("✓ NVIDIA driver detected");
 
-                    // Comprovar si CUDA Toolkit està instal·lat
+                    // Check if CUDA Toolkit is installed
                     await DetectCudaInstallation();
 
                     if (cudaToolkitInstalled)
                     {
-                        AddLogMessage("✓ CUDA Toolkit ja instal·lat");
+                        AddLogMessage("✓ CUDA Toolkit already installed");
                         return true;
                     }
                     else
                     {
-                        AddLogMessage("⚠ Driver NVIDIA present però CUDA Toolkit no instal·lat");
+                        AddLogMessage("⚠ NVIDIA driver present but CUDA Toolkit not installed");
 
-                        // En mode Auto, oferir instal·lació automàtica
+                        // In Auto mode, offer automatic installation
                         if (selectedInstallMode == InstallationMode.Auto)
                         {
                             bool autoInstall = EditorUtility.DisplayDialog(
-                                "CUDA Toolkit Necessari",
-                                "S'ha detectat una targeta NVIDIA però CUDA Toolkit no està instal·lat.\n" +
-                                "Vols instal·lar-lo automàticament?",
-                                "Sí, instal·lar CUDA 12.1", "No, usar CPU"
+                                "CUDA Toolkit Required",
+                                "An NVIDIA card has been detected but CUDA Toolkit is not installed.\n" +
+                                "Do you want to install it automatically?",
+                                "Yes, install CUDA 12.1", "No, use CPU"
                             );
 
                             if (autoInstall)
@@ -1054,20 +1054,20 @@ else:
                 }
                 else
                 {
-                    AddLogMessage("ℹ No s'ha detectat targeta NVIDIA - usant mode CPU");
+                    AddLogMessage("ℹ No NVIDIA card detected - using CPU mode");
                     return false;
                 }
             }
             catch
             {
-                AddLogMessage("ℹ No s'ha pogut detectar CUDA - usant mode CPU");
+                AddLogMessage("ℹ Could not detect CUDA - using CPU mode");
                 return false;
             }
         }
 
         private async Task InstallDependencyGroup(string[] dependencies, string groupName)
         {
-            AddLogMessage($"Instal·lant grup: {groupName}");
+            AddLogMessage($"Installing group: {groupName}");
             await InstallPackages(dependencies);
         }
 
@@ -1082,7 +1082,7 @@ else:
             {
                 try
                 {
-                    AddLogMessage($"Instal·lant: {package}");
+                    AddLogMessage($"Installing: {package}");
 
                     string pipCmd;
                     string arguments;
@@ -1102,22 +1102,22 @@ else:
 
                     if (output.Contains("Successfully installed") || output.Contains("already satisfied"))
                     {
-                        AddLogMessage($"✓ {package} instal·lat");
+                        AddLogMessage($"✓ {package} installed");
 
-                        // Actualitzar estat
+                        // Update status
                         string packageName = package.Split(new char[] { '>', '<', '=', '!' })[0];
                         dependencyStatus[packageName] = DependencyStatus.Installed;
                     }
                     else if (output.Contains("ERROR") || output.Contains("error"))
                     {
-                        AddLogMessage($"✗ Error instal·lant {package}");
+                        AddLogMessage($"✗ Error installing {package}");
                         string packageName = package.Split(new char[] { '>', '<', '=', '!' })[0];
                         dependencyStatus[packageName] = DependencyStatus.Error;
                     }
                 }
                 catch (Exception ex)
                 {
-                    AddLogMessage($"✗ Excepció instal·lant {package}: {ex.Message}");
+                    AddLogMessage($"✗ Exception installing {package}: {ex.Message}");
                 }
             }
         }
@@ -1126,32 +1126,32 @@ else:
         {
             try
             {
-                statusMessage = "Creant environment Conda...";
-                AddLogMessage($"Creant environment Conda: {condaEnvName}");
+                statusMessage = "Creating Conda environment...";
+                AddLogMessage($"Creating Conda environment: {condaEnvName}");
 
                 string arguments = $"create -n {condaEnvName} python=3.9 -y";
                 var output = await ExecuteCommand("conda", arguments);
 
                 if (output.Contains("done") || output.Contains("already exists"))
                 {
-                    AddLogMessage($"✓ Environment {condaEnvName} creat");
+                    AddLogMessage($"✓ Environment {condaEnvName} created");
                     useCondaEnv = true;
                 }
                 else
                 {
-                    AddLogMessage($"✗ Error creant environment: {output}");
+                    AddLogMessage($"✗ Error creating environment: {output}");
                 }
             }
             catch (Exception ex)
             {
-                AddLogMessage($"Error creant environment: {ex.Message}");
+                AddLogMessage($"Error creating environment: {ex.Message}");
             }
         }
         private async Task ForceDeleteDirectory(string directoryPath)
         {
             try
             {
-                // Eliminar atributs de només lectura de tots els fitxers
+                // Remove read-only attributes from all files
                 var files = Directory.GetFiles(directoryPath, "*", SearchOption.AllDirectories);
                 foreach (string file in files)
                 {
@@ -1162,13 +1162,13 @@ else:
                     }
                     catch
                     {
-                        // Ignorar errors individuals
+                        // Ignore individual errors
                     }
                 }
 
-                // Eliminar directoris
+                // Delete directories
                 var directories = Directory.GetDirectories(directoryPath, "*", SearchOption.AllDirectories)
-                    .OrderByDescending(d => d.Length); // Més profunds primer
+                    .OrderByDescending(d => d.Length); // Deepest first
 
                 foreach (string dir in directories)
                 {
@@ -1178,16 +1178,16 @@ else:
                     }
                     catch
                     {
-                        // Ignorar errors individuals
+                        // Ignore individual errors
                     }
                 }
 
-                // Eliminar directori principal
+                // Delete main directory
                 Directory.Delete(directoryPath, false);
             }
             catch (Exception ex)
             {
-                throw new Exception($"No es pot eliminar {directoryPath}: {ex.Message}");
+                throw new Exception($"Cannot delete {directoryPath}: {ex.Message}");
             }
         }
         private async Task InstallHunyuan3DPackage()
@@ -1196,28 +1196,28 @@ else:
             {
                 MainThreadExecutor.RunOnMainThread(async () =>
                 {
-                    AddLogMessage("Instal·lant paquet Hunyuan3D des del repositori oficial...");
+                    AddLogMessage("Installing Hunyuan3D package from the official repository...");
 
-                    // Clonar repositori i instal·lar
+                    // Clone repository and install
                     string tempDir = Path.Combine(Path.GetTempPath(), "hunyuan3d_temp");
 
-                    // Eliminar directori temporal si existeix
+                    // Delete temporary directory if it exists
                     if (Directory.Exists(tempDir))
                     {
-                        AddLogMessage($"Netejant directori temporal existent: {tempDir}");
+                        AddLogMessage($"Cleaning up existing temporary directory: {tempDir}");
                         try
                         {
                             Directory.Delete(tempDir, true);
-                            await Task.Delay(500); // Petita pausa per assegurar que s'ha eliminat
+                            await Task.Delay(500); // Short pause to ensure it's deleted
                         }
                         catch (Exception ex)
                         {
-                            AddLogMessage($"⚠ Avís eliminant directori: {ex.Message}");
+                            AddLogMessage($"⚠ Warning deleting directory: {ex.Message}");
                         }
                     }
 
-                    // Si falla, intentar amb PowerShell
-                    AddLogMessage("Intentant netejar amb PowerShell...");
+                    // If it fails, try with PowerShell
+                    AddLogMessage("Trying to clean up with PowerShell...");
                     try
                     {
                         string psCommand = $"Remove-Item \"{tempDir}\" -Recurse -Force -ErrorAction SilentlyContinue";
@@ -1226,45 +1226,45 @@ else:
 
                         if (!Directory.Exists(tempDir))
                         {
-                            AddLogMessage("✓ Directori netejat amb PowerShell");
+                            AddLogMessage("✓ Directory cleaned up with PowerShell");
 
                         }
                     }
                     catch (Exception ex)
                     {
-                        AddLogMessage($"⚠ PowerShell cleanup fallida: {ex.Message}");
+                        AddLogMessage($"⚠ PowerShell cleanup failed: {ex.Message}");
                     }
 
-                    // Si encara existeix, intentar eliminar fitxers individuals
-                    AddLogMessage("Intentant eliminar fitxers individuals...");
+                    // If it still exists, try deleting individual files
+                    AddLogMessage("Trying to delete individual files...");
                     try
                     {
                         await ForceDeleteDirectory(tempDir);
                         if (!Directory.Exists(tempDir))
                         {
-                            AddLogMessage("✓ Directori netejat forçadament");
+                            AddLogMessage("✓ Directory forcefully cleaned up");
 
                         }
                     }
                     catch (Exception ex)
                     {
-                        AddLogMessage($"⚠ Eliminació forçada fallida: {ex.Message}");
+                        AddLogMessage($"⚠ Forced deletion failed: {ex.Message}");
                     }
 
 
-                    // Verificar que git està instal·lat
+                    // Verify that git is installed
                     var gitCheck = await ExecuteCommand("git", "--version");
                     if (gitCheck.Contains("ERROR") || !gitCheck.Contains("git version"))
                     {
-                        AddLogMessage("✗ Git no està instal·lat o no és accessible");
+                        AddLogMessage("✗ Git is not installed or not accessible");
 
                         bool downloadZip = EditorUtility.DisplayDialog(
-                            "Git No Detectat",
-                            "Git no està instal·lat o no és accessible.\n\n" +
-                            "Opcions:\n" +
-                            "• Descarregar com ZIP (recomanat)\n" +
-                            "• Cancel·lar i instal·lar Git manualment",
-                            "Descarregar ZIP", "Cancel·lar"
+                            "Git Not Detected",
+                            "Git is not installed or not accessible.\n\n" +
+                            "Options:\n" +
+                            "• Download as ZIP (recommended)\n" +
+                            "• Cancel and install Git manually",
+                            "Download ZIP", "Cancel"
                         );
 
                         if (downloadZip)
@@ -1273,33 +1273,33 @@ else:
                         }
                         else
                         {
-                            AddLogMessage("Instal·lació cancel·lada. Instal·la Git des de: https://git-scm.com/downloads");
+                            AddLogMessage("Installation cancelled. Install Git from: https://git-scm.com/downloads");
                             return;
                         }
                     }
                     else
                     {
-                        AddLogMessage("✓ Git detectat: " + gitCheck.Trim());
+                        AddLogMessage("✓ Git detected: " + gitCheck.Trim());
 
-                        // Git clone amb millor gestió d'errors
-                        AddLogMessage($"Clonant repositori a: {tempDir}");
+                        // Git clone with better error handling
+                        AddLogMessage($"Cloning repository to: {tempDir}");
                         string gitArgs = $"clone --depth 1 https://github.com/Tencent-Hunyuan/Hunyuan3D-2.git \"{tempDir}\"";
 
                         var output = await ExecuteCommand("git", gitArgs);
-                        AddLogMessage("Sortida git clone:");
+                        AddLogMessage("Git clone output:");
                         AddLogMessage(output);
 
-                        // Verificar si el clone ha funcionat
+                        // Verify if the clone worked
                         if (!Directory.Exists(tempDir) || !Directory.GetFiles(tempDir, "*.py", SearchOption.AllDirectories).Any())
                         {
-                            AddLogMessage("✗ El repositori no s'ha clonat correctament");
+                            AddLogMessage("✗ The repository was not cloned correctly");
 
-                            // Intentar descarregar com ZIP com a alternativa
+                            // Try downloading as ZIP as an alternative
                             bool tryZip = EditorUtility.DisplayDialog(
-                                "Error Git Clone",
-                                "No s'ha pogut clonar el repositori amb Git.\n\n" +
-                                "Vols intentar descarregar-lo com ZIP?",
-                                "Sí, descarregar ZIP", "Cancel·lar"
+                                "Git Clone Error",
+                                "Could not clone the repository with Git.\n\n" +
+                                "Do you want to try downloading it as a ZIP?",
+                                "Yes, download ZIP", "Cancel"
                             );
 
                             if (tryZip)
@@ -1313,62 +1313,62 @@ else:
                         }
                     }
 
-                    // Verificar que el directori existeix i té contingut
+                    // Verify that the directory exists and has content
                     if (Directory.Exists(tempDir) && Directory.GetFiles(tempDir, "*.*", SearchOption.AllDirectories).Any())
                     {
-                        AddLogMessage($"✓ Repositori preparat a: {tempDir}");
+                        AddLogMessage($"✓ Repository prepared at: {tempDir}");
 
-                        // Buscar requirements.txt
+                        // Search for requirements.txt
                         string reqPath = Path.Combine(tempDir, "requirements.txt");
                         if (!File.Exists(reqPath))
                         {
-                            // Buscar en subdirectoris
+                            // Search in subdirectories
                             var reqFiles = Directory.GetFiles(tempDir, "requirements.txt", SearchOption.AllDirectories);
                             if (reqFiles.Length > 0)
                             {
                                 reqPath = reqFiles[0];
-                                AddLogMessage($"Requirements.txt trobat a: {reqPath}");
+                                AddLogMessage($"requirements.txt found at: {reqPath}");
                             }
                         }
 
-                        // Instal·lar des del codi font o requirements
+                        // Install from source code or requirements
                         string pythonCmd = useCondaEnv ? $"conda run -n {condaEnvName} python" : pythonPath;
                         await EnsureSetuptoolsInstalled(pythonCmd);
 
                         if (File.Exists(reqPath))
                         {
-                            AddLogMessage("Instal·lant des de requirements.txt...");
+                            AddLogMessage("Installing from requirements.txt...");
                             string reqArgs = $"-m pip install -r \"{reqPath}\"";
                             var reqOutput = await ExecuteCommand(pythonCmd, reqArgs);
                             AddLogMessage(reqOutput);
 
                             if (reqOutput.Contains("Successfully installed") || reqOutput.Contains("already satisfied"))
                             {
-                                AddLogMessage("✓ Dependències instal·lades des de requirements.txt");
+                                AddLogMessage("✓ Dependencies installed from requirements.txt");
                             }
                         }
 
-                        // Intentar instal·lar el paquet en mode desenvolupament
+                        // Try to install the package in development mode
                         string setupPath = Path.Combine(tempDir, "setup.py");
                         if (File.Exists(setupPath))
                         {
-                            AddLogMessage("Instal·lant paquet Hunyuan3D en mode desenvolupament...");
+                            AddLogMessage("Installing Hunyuan3D package in development mode...");
                             string installArgs = $"-m pip install -e \"{tempDir}\"";
                             var installOutput = await ExecuteCommand(pythonCmd, installArgs);
                             AddLogMessage(installOutput);
 
                             if (installOutput.Contains("Successfully installed"))
                             {
-                                AddLogMessage("✓ Paquet Hunyuan3D instal·lat en mode desenvolupament");
+                                AddLogMessage("✓ Hunyuan3D package installed in development mode");
                             }
                         }
                         else
                         {
-                            AddLogMessage("⚠ No s'ha trobat setup.py - només s'han instal·lat les dependències");
+                            AddLogMessage("⚠ setup.py not found - only dependencies were installed");
                         }
 
-                        // Intentar instal·lar el paquet en mode desenvolupament
-                        // Instal·lar custom_rasterizer amb gestió millorada d'errors
+                        // Try to install the package in development mode
+                        // Install custom_rasterizer with improved error handling
                         SetCudaHomeEnv();
                         string custRasterPath = Path.Combine(tempDir, "hy3dgen", "texgen", "custom_rasterizer");
                         if (Directory.Exists(custRasterPath))
@@ -1377,15 +1377,15 @@ else:
                         }
                         else
                         {
-                            AddLogMessage("⚠ custom_rasterizer no trobat al repositori");
-                            AddLogMessage("ℹ Continuant sense aquest mòdul opcional");
+                            AddLogMessage("⚠ custom_rasterizer not found in the repository");
+                            AddLogMessage("ℹ Continuing without this optional module");
                         }
 
-                        // Similar per differentiable_renderer...
+                        // Similar for differentiable_renderer...
                         string diffRendererPath = Path.Combine(tempDir, "hy3dgen", "texgen", "differentiable_renderer");
                         if (Directory.Exists(diffRendererPath))
                         {
-                            AddLogMessage("Instal·lant differentiable_renderer...");
+                            AddLogMessage("Installing differentiable_renderer...");
 
                             string installArgs = $"setup.py install";
                             SetCudaHomeEnv();
@@ -1394,49 +1394,49 @@ else:
                             if (installOutput.Contains("Successfully installed") ||
                                 installOutput.Contains("Finished processing"))
                             {
-                                AddLogMessage("✓ differentiable_renderer compilat correctament");
+                                AddLogMessage("✓ differentiable_renderer compiled correctly");
                             }
                             else
                             {
-                                AddLogMessage("⚠ Error o warning compilant differentiable_renderer (mòdul opcional)");
+                                AddLogMessage("⚠ Error or warning compiling differentiable_renderer (optional module)");
                             }
                         }
 
-                        // Test final
-                        AddLogMessage("Verificant instal·lació de Hunyuan3D...");
-                        string testImport = "-c \"import hy3dgen; print('✓ Hunyuan3D importat correctament')\"";
+                        // Final test
+                        AddLogMessage("Verifying Hunyuan3D installation...");
+                        string testImport = "-c \"import hy3dgen; print('✓ Hunyuan3D imported correctly')\"";
                         var testOutput = await ExecuteCommand(pythonCmd, testImport);
 
-                        if (testOutput.Contains("✓ Hunyuan3D importat correctament"))
+                        if (testOutput.Contains("✓ Hunyuan3D imported correctly"))
                         {
-                            AddLogMessage("🎉 Instal·lació de Hunyuan3D completada!");
+                            AddLogMessage("🎉 Hunyuan3D installation complete!");
 
                             EditorUtility.DisplayDialog(
-                                "Hunyuan3D Instal·lat",
-                                "Hunyuan3D s'ha instal·lat correctament!\n\n" +
-                                "Funcionalitats disponibles:\n" +
-                                "✓ Generació de models 3D des d'imatges\n" +
-                                "✓ Processament de malles\n" +
-                                "✓ Interfície Gradio\n\n" +
-                                "Nota: Alguns mòduls opcionals poden haver fallat\n" +
-                                "degut a problemes de compilació. Això no impedeix\n" +
-                                "l'ús bàsic del sistema.",
-                                "Perfecte!"
+                                "Hunyuan3D Installed",
+                                "Hunyuan3D has been installed successfully!\n\n" +
+                                "Available features:\n" +
+                                "✓ 3D model generation from images\n" +
+                                "✓ Mesh processing\n" +
+                                "✓ Gradio interface\n\n" +
+                                "Note: Some optional modules may have failed\n" +
+                                "due to compilation issues. This does not prevent\n" +
+                                "the basic use of the system.",
+                                "Great!"
                             );
                         }
                         else
                         {
-                            AddLogMessage("⚠ Possible problema amb la instal·lació principal:");
+                            AddLogMessage("⚠ Possible issue with the main installation:");
                             AddLogMessage(testOutput);
                         }
 
-                        AddLogMessage($"ℹ Codi font disponible a: {tempDir}");
+                        AddLogMessage($"ℹ Source code available at: {tempDir}");
                     }
                 });
             }
             catch (Exception ex)
             {
-                AddLogMessage($"✗ Error instal·lant paquet Hunyuan3D: {ex.Message}");
+                AddLogMessage($"✗ Error installing Hunyuan3D package: {ex.Message}");
             }
         }
 
@@ -1444,32 +1444,32 @@ else:
         {
             try
             {
-                AddLogMessage("Instal·lant custom_rasterizer...");
-                AddLogMessage("NOTA: Aquest procés pot trigar i requerir Visual Studio compatible");
+                AddLogMessage("Installing custom_rasterizer...");
+                AddLogMessage("NOTE: This process can take time and may require a compatible Visual Studio");
 
-                // Detectar problemes de Visual Studio abans de compilar
+                // Detect Visual Studio issues before compiling
                 bool hasVSIssues = await DetectVisualStudioIssues();
 
                 if (hasVSIssues)
                 {
                     int choice = EditorUtility.DisplayDialogComplex(
-                        "Problema de Compatibilitat Detectat",
-                        "S'ha detectat un possible problema de compatibilitat amb Visual Studio.\n\n" +
-                        "Custom_rasterizer és un mòdul OPCIONAL que millora el rendiment però no és essencial.\n\n" +
-                        "Opcions:",
-                        "Intentar igualment",
-                        "Saltar aquest mòdul",
-                        "Aplicar workarounds"
+                        "Compatibility Issue Detected",
+                        "A potential compatibility issue with Visual Studio has been detected.\n\n" +
+                        "Custom_rasterizer is an OPTIONAL module that improves performance but is not essential.\n\n" +
+                        "Options:",
+                        "Try Anyway",
+                        "Skip this module",
+                        "Apply workarounds"
                     );
 
                     switch (choice)
                     {
-                        case 0: // Intentar igualment
-                            AddLogMessage("⚠ Intentant compilació malgrat problemes detectats...");
+                        case 0: // Try Anyway
+                            AddLogMessage("⚠ Attempting compilation despite detected issues...");
                             break;
-                        case 1: // Saltar
-                            AddLogMessage("⏭ Saltant custom_rasterizer per decisió de l'usuari");
-                            AddLogMessage("ℹ Hunyuan3D funcionarà correctament sense aquest mòdul");
+                        case 1: // Skip
+                            AddLogMessage("⏭ Skipping custom_rasterizer by user decision");
+                            AddLogMessage("ℹ Hunyuan3D will work correctly without this module");
                             return;
                         case 2: // Workarounds
                             await ApplyCompilationWorkarounds(custRasterPath);
@@ -1477,7 +1477,7 @@ else:
                     }
                 }
 
-                // Intentar compilació estàndard
+                // Try standard compilation
                 string installArgs = "setup.py install";
                 SetCudaHomeEnv();
                 var installOutput = await ExecuteCommandInDirectory(pythonCmd, installArgs, custRasterPath);
@@ -1485,25 +1485,25 @@ else:
                 if (installOutput.Contains("Successfully installed") ||
                     installOutput.Contains("Finished processing"))
                 {
-                    AddLogMessage("✅ custom_rasterizer instal·lat correctament!");
+                    AddLogMessage("✅ custom_rasterizer installed correctly!");
                 }
                 else if (installOutput.Contains("ninja: build stopped") ||
                          installOutput.Contains("RuntimeError: Error compiling") ||
                          installOutput.Contains("unsupported Microsoft Visual Studio version"))
                 {
-                    AddLogMessage("❌ Error de compilació detectat");
+                    AddLogMessage("❌ Compilation error detected");
                     await HandleCompilationError(installOutput, pythonCmd, custRasterPath);
                 }
                 else
                 {
-                    AddLogMessage("⚠ Compilació completada amb advertències:");
+                    AddLogMessage("⚠ Compilation completed with warnings:");
                     AddLogMessage(installOutput);
                 }
             }
             catch (Exception ex)
             {
-                AddLogMessage($"❌ Error en custom_rasterizer: {ex.Message}");
-                AddLogMessage("ℹ Aquest mòdul és opcional - Hunyuan3D funcionarà sense ell");
+                AddLogMessage($"❌ Error in custom_rasterizer: {ex.Message}");
+                AddLogMessage("ℹ This module is optional - Hunyuan3D will work without it");
             }
         }
 
@@ -1511,7 +1511,7 @@ else:
         {
             if (errorOutput.Contains("unsupported Microsoft Visual Studio version"))
             {
-                AddLogMessage("⚠ Error de compatibilitat amb Visual Studio:");
+                AddLogMessage("⚠ Visual Studio compatibility error:");
                 AddLogMessage("  Error: " + errorOutput.Split('\n').FirstOrDefault(l => l.Contains("unsupported")));
                 AddLogMessage("");
 
@@ -1519,21 +1519,21 @@ else:
             }
             else if (errorOutput.Contains("ninja: build stopped") || errorOutput.Contains("RuntimeError"))
             {
-                AddLogMessage("⚠ Error de compilació C++/CUDA:");
+                AddLogMessage("⚠ C++/CUDA compilation error:");
 
-                // Extreure el error real
+                // Extract the real error
                 var errorLines = errorOutput.Split('\n');
                 var realError = errorLines.FirstOrDefault(l => l.Contains("error:") || l.Contains("ERROR:"));
                 if (!string.IsNullOrEmpty(realError))
                 {
-                    AddLogMessage($"  Error específic: {realError}");
+                    AddLogMessage($"  Specific error: {realError}");
                 }
 
                 await ShowCompilationErrorOptions(pythonCmd, custRasterPath);
             }
             else
             {
-                AddLogMessage("⚠ Error de compilació desconegut:");
+                AddLogMessage("⚠ Unknown compilation error:");
                 AddLogMessage(errorOutput);
                 await ShowGenericErrorOptions();
             }
@@ -1542,28 +1542,28 @@ else:
         private async Task ShowVSCompatibilityOptions(string pythonCmd, string custRasterPath)
         {
             int choice = EditorUtility.DisplayDialogComplex(
-                "Error de Compatibilitat Visual Studio",
-                "CUDA no suporta la versió actual de Visual Studio.\n\n" +
-                "Opcions:\n" +
-                "• Intentar Forçar: Usar flag --allow-unsupported-compiler\n" +
-                "• Obrir Guia: Mostrar instruccions d'instal·lació\n" +
-                "• Saltar: Continuar sense aquest mòdul opcional",
-                "Intentar Forçar",
-                "Obrir Guia",
-                "Saltar"
+                "Visual Studio Compatibility Error",
+                "CUDA does not support the current version of Visual Studio.\n\n" +
+                "Options:\n" +
+                "• Force Attempt: Use --allow-unsupported-compiler flag\n" +
+                "• Open Guide: Show installation instructions\n" +
+                "• Skip: Continue without this optional module",
+                "Force Attempt",
+                "Open Guide",
+                "Skip"
             );
 
             switch (choice)
             {
-                case 0: // Forçar compilació
-                    AddLogMessage("⚠ Intentant compilació forçada amb --allow-unsupported-compiler");
+                case 0: // Force compilation
+                    AddLogMessage("⚠ Attempting forced compilation with --allow-unsupported-compiler");
                     await TryForceCompilation(pythonCmd, custRasterPath);
                     break;
-                case 1: // Obrir guia
+                case 1: // Open guide
                     ShowVisualStudioInstallationGuide();
                     break;
-                default: // Saltar
-                    AddLogMessage("⏭ Saltant compilació per decisió de l'usuari");
+                default: // Skip
+                    AddLogMessage("⏭ Skipping compilation by user decision");
                     break;
             }
         }
@@ -1571,16 +1571,16 @@ else:
         private async Task ShowCompilationErrorOptions(string pythonCmd, string custRasterPath)
         {
             int choice = EditorUtility.DisplayDialogComplex(
-                "Error de Compilació C++",
-                "Error compilant l'extensió C++/CUDA.\n\n" +
-                "Possibles causes:\n" +
-                "• Python 3.13 no és compatible (usa 3.10/3.11)\n" +
-                "• Falten eines Visual Studio C++\n" +
-                "• Incompatibilitat CUDA/Visual Studio\n\n" +
-                "Opcions:",
-                "Aplicar Workarounds",
-                "Mostrar Guia",
-                "Saltar Mòdul"
+                "C++ Compilation Error",
+                "Error compiling the C++/CUDA extension.\n\n" +
+                "Possible causes:\n" +
+                "• Python 3.13 is not compatible (use 3.10/3.11)\n" +
+                "• Missing Visual Studio C++ tools\n" +
+                "• CUDA/Visual Studio incompatibility\n\n" +
+                "Options:",
+                "Apply Workarounds",
+                "Show Guide",
+                "Skip Module"
             );
 
             switch (choice)
@@ -1588,12 +1588,12 @@ else:
                 case 0: // Workarounds
                     await ApplyCompilationWorkarounds(custRasterPath);
                     break;
-                case 1: // Guia
+                case 1: // Guide
                     ShowDetailedCompilerInstructions();
                     break;
-                default: // Saltar
-                    AddLogMessage("⏭ Saltant custom_rasterizer");
-                    AddLogMessage("ℹ Hunyuan3D funcionarà sense aquest mòdul opcional");
+                default: // Skip
+                    AddLogMessage("⏭ Skipping custom_rasterizer");
+                    AddLogMessage("ℹ Hunyuan3D will work without this optional module");
                     break;
             }
         }
@@ -1601,13 +1601,13 @@ else:
         private async Task ShowGenericErrorOptions()
         {
             bool showGuide = EditorUtility.DisplayDialog(
-                "Error de Compilació",
-                "S'ha produït un error durant la compilació.\n\n" +
-                "Custom_rasterizer és un mòdul opcional que millora el rendiment,\n" +
-                "però Hunyuan3D funcionarà correctament sense ell.\n\n" +
-                "Vols veure la guia de solució de problemes?",
-                "Mostrar Guia",
-                "Continuar sense el mòdul"
+                "Compilation Error",
+                "An error occurred during compilation.\n\n" +
+                "Custom_rasterizer is an optional module that improves performance,\n" +
+                "but Hunyuan3D will work correctly without it.\n\n" +
+                "Do you want to see the troubleshooting guide?",
+                "Show Guide",
+                "Continue without the module"
             );
 
             if (showGuide)
@@ -1616,7 +1616,7 @@ else:
             }
             else
             {
-                AddLogMessage("⏭ Continuant sense custom_rasterizer");
+                AddLogMessage("⏭ Continuing without custom_rasterizer");
             }
         }
 
@@ -1624,25 +1624,25 @@ else:
         {
             try
             {
-                AddLogMessage("Configurant variables d'entorn per forçar compilació...");
+                AddLogMessage("Setting environment variables to force compilation...");
 
-                // Crear script Python personalitzat per configurar l'entorn
+                // Create custom Python script to set the environment
                 string forceScript = @"
 import os
 import sys
 import subprocess
 
-# Configurar variables d'entorn per CUDA
+# Set environment variables for CUDA
 os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 os.environ['NVCC_APPEND_FLAGS'] = '-allow-unsupported-compiler'
 os.environ['TORCH_CUDA_ARCH_LIST'] = '6.0;6.1;7.0;7.5;8.0;8.6'
 os.environ['FORCE_CUDA'] = '1'
 
-print('Variables d\'entorn configurades per compilació forçada')
+print('Environment variables set for forced compilation')
 print('NVCC_APPEND_FLAGS:', os.environ.get('NVCC_APPEND_FLAGS'))
 
 try:
-    # Executar setup.py amb configuració forçada
+    # Execute setup.py with forced configuration
     result = subprocess.run([sys.executable, 'setup.py', 'install', '--force'], 
                           capture_output=True, text=True, timeout=1800)  # 30 min timeout
     
@@ -1653,14 +1653,14 @@ try:
         print(result.stderr)
     
     if result.returncode == 0:
-        print('✓ Compilació forçada exitosa')
+        print('✓ Forced compilation successful')
     else:
-        print(f'⚠ Compilació acabada amb codi: {result.returncode}')
+        print(f'⚠ Compilation finished with code: {result.returncode}')
     
     sys.exit(result.returncode)
     
 except subprocess.TimeoutExpired:
-    print('✗ Timeout - compilació trigant més de 30 minuts')
+    print('✗ Timeout - compilation trigant més de 30 minuts')
     sys.exit(1)
 except Exception as e:
     print(f'✗ Error durant compilació forçada: {e}')
@@ -1672,22 +1672,22 @@ except Exception as e:
 
                 try
                 {
-                    AddLogMessage("Executant compilació forçada...");
-                    AddLogMessage("ADVERTÈNCIA: Usant --allow-unsupported-compiler pot causar problemes");
+                    AddLogMessage("Executing forced compilation...");
+                    AddLogMessage("WARNING: Using --allow-unsupported-compiler can cause issues");
                     SetCudaHomeEnv();
                     var result = await ExecuteCommandInDirectory(pythonCmd, $"\"{tempScript}\"", custRasterPath);
 
-                    if (result.Contains("✓ Compilació forçada exitosa"))
+                    if (result.Contains("✓ Forced compilation successful"))
                     {
-                        AddLogMessage("✓ Compilació forçada completada amb èxit");
+                        AddLogMessage("✓ Forced compilation completed successfully");
                     }
-                    else if (result.Contains("⚠ Compilació acabada amb codi:"))
+                    else if (result.Contains("⚠ Compilation finished with code:"))
                     {
-                        AddLogMessage("⚠ Compilació forçada amb advertències - pot funcionar parcialment");
+                        AddLogMessage("⚠ Forced compilation with warnings - may work partially");
                     }
                     else
                     {
-                        AddLogMessage("✗ Compilació forçada fallida:");
+                        AddLogMessage("✗ Forced compilation failed:");
                         AddLogMessage(result);
                     }
                 }
@@ -1698,7 +1698,7 @@ except Exception as e:
             }
             catch (Exception ex)
             {
-                AddLogMessage($"✗ Error en compilació forçada: {ex.Message}");
+                AddLogMessage($"✗ Error in forced compilation: {ex.Message}");
             }
         }
 
@@ -1706,35 +1706,35 @@ except Exception as e:
         {
             try
             {
-                AddLogMessage("🔧 Aplicant workarounds per problemes de compilació...");
+                AddLogMessage("🔧 Applying workarounds for compilation issues...");
 
-                // 1. Modificar setup.py per afegir flags compatibles
+                // 1. Modify setup.py to add compatible flags
                 string setupPath = Path.Combine(custRasterPath, "setup.py");
                 if (File.Exists(setupPath))
                 {
                     await PatchSetupPyForCompatibility(setupPath);
                 }
 
-                // 2. Configurar variables d'entorn
-                AddLogMessage("Configurant variables d'entorn optimitzades...");
+                // 2. Set environment variables
+                AddLogMessage("Setting optimized environment variables...");
 
-                // 3. Intentar compilació amb configuració modificada
+                // 3. Try compilation with modified configuration
                 string pythonCmd = useCondaEnv ? $"conda run -n {condaEnvName} python" : pythonPath;
                 var result = await TryAlternativeCompilation(pythonCmd, "setup.py install", custRasterPath);
 
                 if (result.Contains("Successfully installed"))
                 {
-                    AddLogMessage("✅ Compilació amb workarounds exitosa!");
+                    AddLogMessage("✅ Compilation with workarounds successful!");
                 }
                 else
                 {
-                    AddLogMessage("⚠ Workarounds aplicats però encara hi ha problemes");
+                    AddLogMessage("⚠ Workarounds applied but issues persist");
                     AddLogMessage(result);
                 }
             }
             catch (Exception ex)
             {
-                AddLogMessage($"✗ Error aplicant workarounds: {ex.Message}");
+                AddLogMessage($"✗ Error applying workarounds: {ex.Message}");
             }
         }
 
@@ -1742,42 +1742,42 @@ except Exception as e:
         {
             try
             {
-                AddLogMessage("Modificant setup.py per compatibilitat...");
+                AddLogMessage("Modifying setup.py for compatibility...");
 
                 string content = File.ReadAllText(setupPath);
 
-                // Buscar CUDAExtension i afegir flags compatibles
+                // Search for CUDAExtension and add compatible flags
                 if (content.Contains("CUDAExtension") && !content.Contains("extra_compile_args"))
                 {
-                    // Afegir extra_compile_args per evitar que warnings siguin errors
+                    // Add extra_compile_args to prevent warnings from being errors
                     string newContent = content.Replace(
                         "CUDAExtension('custom_rasterizer_kernel', [",
                         @"CUDAExtension(
     'custom_rasterizer_kernel',
     [");
 
-                    // Afegir flags compatibles
+                    // Add compatible flags
                     newContent = newContent.Replace(
                         "],\n)",
                         @"],
     extra_compile_args={
-        'cxx': ['/WX-'],  # No tractar warnings com errors
+        'cxx': ['/WX-'],  # Do not treat warnings as errors
         'nvcc': ['-allow-unsupported-compiler']
     }
 )"
                     );
 
                     File.WriteAllText(setupPath, newContent);
-                    AddLogMessage("✓ setup.py modificat per millor compatibilitat");
+                    AddLogMessage("✓ setup.py modified for better compatibility");
                 }
                 else
                 {
-                    AddLogMessage("setup.py ja té configuració compatible o no es pot modificar");
+                    AddLogMessage("setup.py already has compatible settings or cannot be modified");
                 }
             }
             catch (Exception ex)
             {
-                AddLogMessage($"⚠ Error modificant setup.py: {ex.Message}");
+                AddLogMessage($"⚠ Error modifying setup.py: {ex.Message}");
             }
         }
 
@@ -1785,21 +1785,21 @@ except Exception as e:
         {
             try
             {
-                AddLogMessage("Intentant compilació alternativa amb configuració especial...");
+                AddLogMessage("Trying alternative compilation with special configuration...");
 
-                // Crear script temporal per compilació alternativa
+                // Create temporary script for alternative compilation
                 string altScript = @"
 import os
 import sys
 import subprocess
 
-# Configurar entorn per màxima compatibilitat
+# Set environment for maximum compatibility
 os.environ['DISTUTILS_USE_SDK'] = '1'
 os.environ['MSSdk'] = '1'
 os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 os.environ['TORCH_USE_CUDA_DSA'] = '1'
 
-print('Entorn configurat per compilació alternativa')
+print('Environment set for alternative compilation')
 
 try:
     result = subprocess.run([sys.executable] + sys.argv[1:], 
@@ -1827,7 +1827,7 @@ except Exception as e:
             }
             catch (Exception ex)
             {
-                return $"Error en compilació alternativa: {ex.Message}";
+                return $"Error in alternative compilation: {ex.Message}";
             }
         }
 
@@ -1835,32 +1835,32 @@ except Exception as e:
         {
             try
             {
-                AddLogMessage("Detectant problemes de Visual Studio...");
+                AddLogMessage("Detecting Visual Studio issues...");
 
-                // Comprovar versió de Visual Studio
+                // Check Visual Studio version
                 var vswhereOutput = await ExecuteCommand("vswhere", "-latest -property installationVersion");
 
                 if (!string.IsNullOrEmpty(vswhereOutput) && !vswhereOutput.Contains("ERROR"))
                 {
-                    AddLogMessage($"Visual Studio detectat: {vswhereOutput.Trim()}");
+                    AddLogMessage($"Visual Studio detected: {vswhereOutput.Trim()}");
 
-                    // Comprovar si és VS2022 (versió 17.x)
+                    // Check if it's VS2022 (version 17.x)
                     if (vswhereOutput.StartsWith("17."))
                     {
-                        AddLogMessage("⚠ VS2022 detectat - pot haver-hi problemes de compatibilitat amb CUDA");
+                        AddLogMessage("⚠ VS2022 detected - there may be compatibility issues with CUDA");
                         return true;
                     }
                 }
 
-                // Comprovar eines C++
+                // Check C++ tools
                 var clOutput = await ExecuteCommand("cl", "");
                 if (clOutput.Contains("Microsoft") && clOutput.Contains("C/C++"))
                 {
-                    AddLogMessage("✓ Compilador C++ detectat");
+                    AddLogMessage("✓ C++ compiler detected");
                 }
                 else
                 {
-                    AddLogMessage("⚠ Compilador C++ no detectat");
+                    AddLogMessage("⚠ C++ compiler not detected");
                     return true;
                 }
 
@@ -1868,7 +1868,7 @@ except Exception as e:
             }
             catch
             {
-                AddLogMessage("⚠ No s'ha pogut detectar Visual Studio");
+                AddLogMessage("⚠ Could not detect Visual Studio");
                 return true;
             }
         }
@@ -1876,43 +1876,43 @@ except Exception as e:
         private void ShowVisualStudioInstallationGuide()
         {
             string guide = @"
-GUIA D'INSTAL·LACIÓ VISUAL STUDIO PER CUDA
+VISUAL STUDIO INSTALLATION GUIDE FOR CUDA
 
-1. VERSIÓ RECOMANADA:
-   • Visual Studio 2019 (versió 16.x)
-   • Visual Studio 2022 (versió 17.x) amb CUDA 12.x
+1. RECOMMENDED VERSION:
+   • Visual Studio 2019 (version 16.x)
+   • Visual Studio 2022 (version 17.x) with CUDA 12.x
 
-2. COMPONENTS NECESSARIS:
+2. REQUIRED COMPONENTS:
    • Desktop development with C++
    • MSVC v142/v143 - VS 2019/2022 C++ x64/x86 build tools
    • Windows 10/11 SDK
 
-3. INSTAL·LACIÓ:
-   a) Descarregar VS des de: https://visualstudio.microsoft.com/
-   b) Durant la instal·lació, seleccionar 'Desktop development with C++'
-   c) Reiniciar després d'instal·lar
+3. INSTALLATION:
+   a) Download VS from: https://visualstudio.microsoft.com/
+   b) During installation, select 'Desktop development with C++'
+   c) Restart after installing
 
-4. SOLUCIÓ PROBLEMES COMPATIBILITAT:
-   • CUDA 11.x → Visual Studio 2019 o 2022
+4. COMPATIBILITY TROUBLESHOOTING:
+   • CUDA 11.x → Visual Studio 2019 or 2022
    • CUDA 12.x → Visual Studio 2022
-   • Si tens VS2022 amb CUDA 11.x, usar flag --allow-unsupported-compiler
+   • If you have VS2022 with CUDA 11.x, use --allow-unsupported-compiler flag
 
-5. VARIABLES D'ENTORN:
-   Afegir al PATH:
+5. ENVIRONMENT VARIABLES:
+   Add to PATH:
    • C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64
    • C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin
 ";
 
             EditorUtility.DisplayDialog(
-                "Guia Visual Studio per CUDA",
+                "Visual Studio Guide for CUDA",
                 guide,
-                "Tancar"
+                "Close"
             );
 
             if (EditorUtility.DisplayDialog(
-                "Obrir Documentació",
-                "Vols obrir la documentació oficial de CUDA?",
-                "Sí", "No"))
+                "Open Documentation",
+                "Do you want to open the official CUDA documentation?",
+                "Yes", "No"))
             {
                 Application.OpenURL("https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/");
             }
@@ -1921,39 +1921,39 @@ GUIA D'INSTAL·LACIÓ VISUAL STUDIO PER CUDA
         private void ShowDetailedCompilerInstructions()
         {
             string instructions = @"
-GUIA DETALLADA SOLUCIÓ PROBLEMES COMPILACIÓ
+DETAILED COMPILATION TROUBLESHOOTING GUIDE
 
-PROBLEMA 1: Python 3.13 Incompatible
-• SOLUCIÓ: Usar Python 3.10 o 3.11
-• Instal·lar: https://www.python.org/downloads/release/python-3119/
+PROBLEM 1: Python 3.13 Incompatible
+• SOLUTION: Use Python 3.10 or 3.11
+• Install: https://www.python.org/downloads/release/python-3119/
 
-PROBLEMA 2: Visual Studio no compatible
-• SOLUCIÓ: Instal·lar VS2019 o VS2022
+PROBLEM 2: Visual Studio not compatible
+• SOLUTION: Install VS2019 or VS2022
 • Components: Desktop development with C++
 
-PROBLEMA 3: CUDA Toolkit no trobat
-• SOLUCIÓ: Instal·lar CUDA Toolkit
+PROBLEM 3: CUDA Toolkit not found
+• SOLUTION: Install CUDA Toolkit
 • CUDA 11.8: https://developer.nvidia.com/cuda-11-8-0-download-archive
 • CUDA 12.1: https://developer.nvidia.com/cuda-12-1-0-download-archive
 
-PROBLEMA 4: Error 'unsupported Microsoft Visual Studio version'
-• SOLUCIÓ 1: Downgrade a VS2019
-• SOLUCIÓ 2: Usar flag --allow-unsupported-compiler
-• SOLUCIÓ 3: Actualitzar a CUDA 12.x
+PROBLEM 4: Error 'unsupported Microsoft Visual Studio version'
+• SOLUTION 1: Downgrade to VS2019
+• SOLUTION 2: Use --allow-unsupported-compiler flag
+• SOLUTION 3: Update to CUDA 12.x
 
-PROBLEMA 5: Error 'ninja: build stopped'
-• SOLUCIÓ: Instal·lar ninja manualment
+PROBLEM 5: Error 'ninja: build stopped'
+• SOLUTION: Install ninja manually
   pip install ninja
 
-WORKAROUND GENERAL:
-Si res funciona, pots saltar aquest mòdul opcional.
-Hunyuan3D funcionarà igualment però més lentament.
+GENERAL WORKAROUND:
+If nothing works, you can skip this optional module.
+Hunyuan3D will still work, but more slowly.
 ";
 
             EditorUtility.DisplayDialog(
-                "Instruccions Detallades Compilació",
+                "Detailed Compilation Instructions",
                 instructions,
-                "Tancar"
+                "Close"
             );
         }
 
@@ -1961,7 +1961,7 @@ Hunyuan3D funcionarà igualment però més lentament.
         {
             try
             {
-                AddLogMessage("Descarregant Hunyuan3D com ZIP...");
+                AddLogMessage("Downloading Hunyuan3D as ZIP...");
 
                 string zipUrl = "https://github.com/Tencent-Hunyuan/Hunyuan3D-2/archive/refs/heads/main.zip";
                 string zipPath = Path.Combine(Path.GetTempPath(), "hunyuan3d.zip");
@@ -1971,27 +1971,27 @@ Hunyuan3D funcionarà igualment però més lentament.
                     client.DownloadProgressChanged += (s, e) =>
                     {
                         progress = e.ProgressPercentage / 100f;
-                        statusMessage = $"Descarregant: {e.ProgressPercentage}%";
+                        statusMessage = $"Downloading: {e.ProgressPercentage}%";
                         Repaint();
                     };
 
                     await client.DownloadFileTaskAsync(zipUrl, zipPath);
                 }
 
-                AddLogMessage($"ZIP descarregat a: {zipPath}");
+                AddLogMessage($"ZIP downloaded to: {zipPath}");
 
-                // Extreure ZIP
-                statusMessage = "Extraient arxius...";
+                // Extract ZIP
+                statusMessage = "Extracting files...";
                 await ExtractZipFile(zipPath, targetDir);
 
-                // Netejar
+                // Clean up
                 try { File.Delete(zipPath); } catch { }
 
-                AddLogMessage($"✓ Repositori extret a: {targetDir}");
+                AddLogMessage($"✓ Repository extracted to: {targetDir}");
             }
             catch (Exception ex)
             {
-                AddLogMessage($"Error descarregant ZIP: {ex.Message}");
+                AddLogMessage($"Error downloading ZIP: {ex.Message}");
                 throw;
             }
         }
@@ -2002,7 +2002,7 @@ Hunyuan3D funcionarà igualment però més lentament.
             {
                 System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, extractPath);
 
-                // Moure contingut del subdirectori principal
+                // Move content from the main subdirectory
                 var dirs = Directory.GetDirectories(extractPath);
                 if (dirs.Length == 1 && dirs[0].Contains("Hunyuan3D"))
                 {
@@ -2023,22 +2023,22 @@ Hunyuan3D funcionarà igualment però més lentament.
         {
             try
             {
-                AddLogMessage("=== INSTAL·LACIÓ AMB UV (RECOMANAT PER WINDOWS) ===");
+                AddLogMessage("=== INSTALLATION WITH UV (RECOMMENDED FOR WINDOWS) ===");
 
-                // 1. Verificar/Instal·lar UV
+                // 1. Verify/Install UV
                 bool uvInstalled = await CheckAndInstallUV();
                 if (!uvInstalled)
                 {
-                    AddLogMessage("✗ No s'ha pogut instal·lar UV");
+                    AddLogMessage("✗ Could not install UV");
 
-                    // Oferir alternativa PowerShell
+                    // Offer PowerShell alternative
                     if (Application.platform == RuntimePlatform.WindowsEditor)
                     {
                         if (EditorUtility.DisplayDialog(
-                            "UV no disponible",
-                            "No s'ha pogut instal·lar UV automàticament.\n\n" +
-                            "Vols executar l'instal·lador PowerShell complet?",
-                            "Executar PowerShell", "Cancel·lar"))
+                            "UV not available",
+                            "Could not install UV automatically.\n\n" +
+                            "Do you want to run the full PowerShell installer?",
+                            "Run PowerShell", "Cancel"))
                         {
                             RunWindowsPowerShellInstaller();
                         }
@@ -2046,16 +2046,16 @@ Hunyuan3D funcionarà igualment però més lentament.
                     return;
                 }
 
-                // 2. Crear projecte UV per Hunyuan3D
+                // 2. Create UV project for Hunyuan3D
                 string projectDir = Path.Combine(Application.dataPath, "..", "Hunyuan3D_UV");
                 Directory.CreateDirectory(projectDir);
 
-                AddLogMessage($"Creant projecte UV a: {projectDir}");
+                AddLogMessage($"Creating UV project at: {projectDir}");
                 SetCudaHomeEnv();
-                // 3. Inicialitzar projecte UV
+                // 3. Initialize UV project
                 await ExecuteCommandInDirectory("uv", "init", projectDir);
 
-                // 4. Afegir dependències principals
+                // 4. Add main dependencies
                 string[] uvDependencies = {
                     "torch --index-url https://download.pytorch.org/whl/cu121",
                     "torchvision --index-url https://download.pytorch.org/whl/cu121",
@@ -2072,32 +2072,32 @@ Hunyuan3D funcionarà igualment però més lentament.
 
                 foreach (var dep in uvDependencies)
                 {
-                    AddLogMessage($"Afegint: {dep}");
+                    AddLogMessage($"Adding: {dep}");
                     await ExecuteCommandInDirectory("uv", $"add {dep}", projectDir);
                     progress = Array.IndexOf(uvDependencies, dep) / (float)uvDependencies.Length;
                 }
 
-                // 5. Instal·lar Hunyuan3D des de git
-                AddLogMessage("Instal·lant Hunyuan3D des del repositori...");
+                // 5. Install Hunyuan3D from git
+                AddLogMessage("Installing Hunyuan3D from the repository...");
                 await ExecuteCommandInDirectory("uv", "pip install git+https://github.com/Tencent-Hunyuan/Hunyuan3D-2.git", projectDir);
 
                 
-                AddLogMessage("✅ Instal·lació amb UV completada!");
-                AddLogMessage($"📁 Projecte creat a: {projectDir}");
+                AddLogMessage("✅ Installation with UV complete!");
+                AddLogMessage($"📁 Project created at: {projectDir}");
 
                 EditorUtility.DisplayDialog(
-                    "Instal·lació UV Completada",
-                    $"Hunyuan3D s'ha instal·lat amb UV!\n\n" +
-                    $"Ubicació: {projectDir}\n\n" +
-                    $"Per usar-lo:\n" +
-                    $"1. Obre un terminal a {projectDir}\n" +
-                    $"2. Executa: uv run python <script.py>",
-                    "Perfecte!"
+                    "UV Installation Complete",
+                    $"Hunyuan3D has been installed with UV!\n\n" +
+                    $"Location: {projectDir}\n\n" +
+                    $"To use it:\n" +
+                    $"1. Open a terminal in {projectDir}\n" +
+                    $"2. Run: uv run python <script.py>",
+                    "Great!"
                 );
             }
             catch (Exception ex)
             {
-                AddLogMessage($"✗ Error instal·lant paquet Hunyuan3D: {ex.Message}");
+                AddLogMessage($"✗ Error installing Hunyuan3D package: {ex.Message}");
             }
         }
 
@@ -2105,21 +2105,21 @@ Hunyuan3D funcionarà igualment però més lentament.
         {
             string scriptPath = Path.Combine(Application.dataPath, "UnityPlugin", "Scripts", "install_hunyuan3d_windows.ps1");
 
-            // Verificar si el script existeix
+            // Check if the script exists
             if (!File.Exists(scriptPath))
             {
-                // Crear el script si no existeix
+                // Create the script if it doesn't exist
                 string scriptsDir = Path.GetDirectoryName(scriptPath);
                 if (!Directory.Exists(scriptsDir))
                 {
                     Directory.CreateDirectory(scriptsDir);
                 }
 
-                // Descarregar o crear el script
+                // Download or create the script
                 if (EditorUtility.DisplayDialog(
-                    "Script d'instal·lació no trobat",
-                    "El script PowerShell no existeix. Vols crear-lo automàticament?",
-                    "Crear Script", "Cancel·lar"))
+                    "Installation script not found",
+                    "The PowerShell script does not exist. Do you want to create it automatically?",
+                    "Create Script", "Cancel"))
                 {
                     CreateWindowsInstallerScript(scriptPath);
                 }
@@ -2129,12 +2129,12 @@ Hunyuan3D funcionarà igualment però més lentament.
                 }
             }
 
-            // Opcions d'instal·lació
+            // Installation options
             bool useCuda12 = EditorUtility.DisplayDialog(
-                "Selecciona versió CUDA",
-                "Quina versió de CUDA vols utilitzar?\n\n" +
-                "CUDA 12.4: Més recent, millor rendiment\n" +
-                "CUDA 11.8: Més compatible",
+                "Select CUDA version",
+                "Which CUDA version do you want to use?\n\n" +
+                "CUDA 12.4: Newest, best performance\n" +
+                "CUDA 11.8: More compatible",
                 "CUDA 12.4", "CUDA 11.8"
             );
 
@@ -2145,12 +2145,12 @@ Hunyuan3D funcionarà igualment però més lentament.
                 installPath = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
             }
 
-            // Construir arguments
+            // Build arguments
             string arguments = $"-ExecutionPolicy Bypass -File \"{scriptPath}\" " +
                               $"-InstallPath \"{installPath}\" " +
                               $"-PythonVersion \"3.10\" " +
                               (useCuda12 ? "-UseCUDA12" : "") +
-                              (EditorUtility.DisplayDialog("Models", "Vols descarregar els models pre-entrenats? (~10GB)", "Sí", "No") ? "" : " -SkipModelDownload");
+                              (EditorUtility.DisplayDialog("Models", "Do you want to download the pre-trained models? (~10GB)", "Yes", "No") ? "" : " -SkipModelDownload");
 
             try
             {
@@ -2159,103 +2159,103 @@ Hunyuan3D funcionarà igualment però més lentament.
                     FileName = "powershell.exe",
                     Arguments = arguments,
                     UseShellExecute = true,
-                    Verb = "runas" // Executar com administrador si cal
+                    Verb = "runas" // Run as administrator if needed
                 };
 
                 var process = Process.Start(startInfo);
 
-                AddLogMessage("🚀 S'ha iniciat l'instal·lador de Windows");
-                AddLogMessage($"📁 Carpeta d'instal·lació: {installPath}");
-                AddLogMessage("⏳ L'instal·lador s'està executant en una finestra separada...");
+                AddLogMessage("🚀 Windows installer started");
+                AddLogMessage($"📁 Installation folder: {installPath}");
+                AddLogMessage("⏳ The installer is running in a separate window...");
 
                 EditorUtility.DisplayDialog(
-                    "Instal·lador en execució",
-                    "L'instal·lador de Hunyuan3D per Windows s'està executant.\n\n" +
-                    "Segueix les instruccions a la finestra de PowerShell.\n\n" +
-                    "Un cop finalitzi, torna a Unity i verifica la instal·lació.",
-                    "D'acord"
+                    "Installer Running",
+                    "The Hunyuan3D for Windows installer is running.\n\n" +
+                    "Follow the instructions in the PowerShell window.\n\n" +
+                    "Once it finishes, return to Unity and verify the installation.",
+                    "OK"
                 );
             }
             catch (Exception ex)
             {
-                AddLogMessage($"❌ Error executant l'instal·lador: {ex.Message}");
+                AddLogMessage($"❌ Error running the installer: {ex.Message}");
 
-                // Oferir executar manualment
+                // Offer to run manually
                 if (EditorUtility.DisplayDialog(
-                    "Error executant script",
-                    "No s'ha pogut executar el script automàticament.\n\n" +
-                    "Pots executar-lo manualment:\n" +
-                    $"1. Obre PowerShell com administrador\n" +
-                    $"2. Executa: {scriptPath}",
-                    "Copiar Path", "Tancar"))
+                    "Error running script",
+                    "Could not run the script automatically.\n\n" +
+                    "You can run it manually:\n" +
+                    $"1. Open PowerShell as administrator\n" +
+                    $"2. Run: {scriptPath}",
+                    "Copy Path", "Close"))
                 {
                     GUIUtility.systemCopyBuffer = scriptPath;
-                    AddLogMessage("📋 Path del script copiat al portapapers");
+                    AddLogMessage("📋 Script path copied to clipboard");
                 }
             }
         }
 
         private void CreateWindowsInstallerScript(string scriptPath)
         {
-            // Aquí crearies el contingut del script PowerShell
-            // Per simplicitat, mostraré un missatge
-            AddLogMessage("📝 Creant script d'instal·lació...");
+            // Here you would create the content of the PowerShell script
+            // For simplicity, I'll show a message
+            AddLogMessage("📝 Creating installation script...");
 
-            // El contingut del script ja està definit més amunt
-            // Aquí simplement el copiaries al fitxer
+            // The script content is already defined above
+            // Here you would simply copy it to the file
 
             EditorUtility.DisplayDialog(
-                "Script creat",
-                $"Script d'instal·lació creat a:\n{scriptPath}\n\n" +
-                "Executa'l des de PowerShell com administrador.",
-                "D'acord"
+                "Script created",
+                $"Installation script created at:\n{scriptPath}\n\n" +
+                "Run it from PowerShell as administrator.",
+                "OK"
             );
         }
 
         private void ShowWindowsInstallGuide()
         {
             string guide = @"
-GUIA D'INSTAL·LACIÓ RÀPIDA PER WINDOWS
+QUICK INSTALLATION GUIDE FOR WINDOWS
 
-Aquesta instal·lació utilitza UV, un gestor de paquets Python 
-ultra-ràpid optimitzat per Windows.
+This installation uses UV, an ultra-fast Python package manager
+optimized for Windows.
 
-AVANTATGES:
-✓ 10-100x més ràpid que pip
-✓ Gestió intel·ligent de dependències
-✓ Cache compartida entre projectes
-✓ Resolució de conflictes automàtica
+ADVANTAGES:
+✓ 10-100x faster than pip
+✓ Smart dependency management
+✓ Shared cache between projects
+✓ Automatic conflict resolution
 
-REQUISITS:
+REQUIREMENTS:
 • Windows 10/11
-• ~15GB espai lliure
-• Connexió a Internet
-• Targeta NVIDIA (opcional però recomanat)
+• ~15GB free space
+• Internet connection
+• NVIDIA card (optional but recommended)
 
-PROCÉS D'INSTAL·LACIÓ:
-1. Clic a 'Instal·lació Ràpida Windows'
-2. Selecciona versió CUDA (12.4 recomanat)
-3. Tria carpeta d'instal·lació
-4. Segueix instruccions a PowerShell
+INSTALLATION PROCESS:
+1. Click on 'Windows Quick Install'
+2. Select CUDA version (12.4 recommended)
+3. Choose installation folder
+4. Follow instructions in PowerShell
 
-DESPRÉS D'INSTAL·LAR:
-• Executa: start_hunyuan3d.bat
-• O activa: .venv\Scripts\activate
+AFTER INSTALLING:
+• Run: start_hunyuan3d.bat
+• Or activate: .venv\Scripts\activate
 
-SOLUCIÓ DE PROBLEMES:
-• Si falla, executa PowerShell com administrador
-• Assegura't de tenir Git instal·lat
-• Desactiva antivirus temporalment si cal
+TROUBLESHOOTING:
+• If it fails, run PowerShell as administrator
+• Make sure you have Git installed
+• Temporarily disable antivirus if necessary
 
-MÉS INFORMACIÓ:
+MORE INFORMATION:
 • UV: https://github.com/astral-sh/uv
 • Hunyuan3D: https://github.com/Tencent-Hunyuan/Hunyuan3D-2
 ";
 
             EditorUtility.DisplayDialog(
-                "Guia d'Instal·lació Windows",
+                "Windows Installation Guide",
                 guide,
-                "Tancar"
+                "Close"
             );
         }
 
@@ -2263,51 +2263,51 @@ MÉS INFORMACIÓ:
         {
             try
             {
-                AddLogMessage("=== INSTAL·LANT PYTORCH AMB CUDA 11.8 ===");
+                AddLogMessage("=== INSTALLING PYTORCH WITH CUDA 11.8 ===");
 
                 string pythonCmd = useCondaEnv ? $"conda run -n {condaEnvName} python" : pythonPath;
 
-                // Desinstal·lar versions existents
-                AddLogMessage("Desinstal·lant versions anteriors de PyTorch...");
+                // Uninstall existing versions
+                AddLogMessage("Uninstalling previous versions of PyTorch...");
                 await ExecuteCommand(pythonCmd, "-m pip uninstall torch torchvision torchaudio -y");
 
-                // Instal·lar PyTorch amb CUDA 11.8
+                // Install PyTorch with CUDA 11.8
                 string installCmd = "-m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118";
-                AddLogMessage("Instal·lant PyTorch amb CUDA 11.8...");
+                AddLogMessage("Installing PyTorch with CUDA 11.8...");
 
                 var output = await ExecuteCommand(pythonCmd, installCmd);
 
                 if (output.Contains("Successfully installed"))
                 {
-                    AddLogMessage("✓ PyTorch CUDA 11.8 instal·lat correctament");
+                    AddLogMessage("✓ PyTorch CUDA 11.8 installed correctly");
 
-                    // Verificar instal·lació
+                    // Verify installation
                     await CheckPyTorchCuda();
                 }
                 else
                 {
-                    AddLogMessage("✗ Error instal·lant PyTorch CUDA 11.8");
+                    AddLogMessage("✗ Error installing PyTorch CUDA 11.8");
                     AddLogMessage(output);
                 }
             }
             catch (Exception ex)
             {
-                AddLogMessage($"Error instal·lant PyTorch CUDA 11.8: {ex.Message}");
+                AddLogMessage($"Error installing PyTorch CUDA 11.8: {ex.Message}");
             }
         }
 
         private bool ConfirmCudaInstallation(string version)
         {
             return EditorUtility.DisplayDialog(
-                $"Instal·lar CUDA Toolkit {version}",
-                $"Això descarregarà i instal·larà CUDA Toolkit {version} (~3GB).\n\n" +
-                "Requeriments:\n" +
-                "• Targeta gràfica NVIDIA\n" +
-                "• ~3GB d'espai al disc\n" +
-                "• Permisos d'administrador\n" +
-                "• Reiniciar pot ser necessari\n\n" +
-                "Continuar?",
-                "Instal·lar", "Cancel·lar"
+                $"Install CUDA Toolkit {version}",
+                $"This will download and install CUDA Toolkit {version} (~3GB).\n\n" +
+                "Requirements:\n" +
+                "• NVIDIA graphics card\n" +
+                "• ~3GB of disk space\n" +
+                "• Administrator permissions\n" +
+                "• A restart may be necessary\n\n" +
+                "Continue?",
+                "Install", "Cancel"
             );
         }
 
@@ -2316,44 +2316,44 @@ MÉS INFORMACIÓ:
             try
             {
                 isInstallingCuda = true;
-                AddLogMessage($"=== INSTAL·LANT CUDA TOOLKIT {version} ===");
+                AddLogMessage($"=== INSTALLING CUDA TOOLKIT {version} ===");
 
                 string downloadUrl = version switch
                 {
                     "11.8" => "https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_522.06_windows.exe",
                     "12.1" => "https://developer.download.nvidia.com/compute/cuda/12.1.0/local_installers/cuda_12.1.0_531.14_windows.exe",
-                    _ => throw new Exception($"Versió CUDA {version} no suportada")
+                    _ => throw new Exception($"CUDA version {version} not supported")
                 };
 
                 string installerPath = Path.Combine(Path.GetTempPath(), $"cuda_{version}_installer.exe");
 
-                // Descarregar
-                statusMessage = $"Descarregant CUDA {version}...";
+                // Download
+                statusMessage = $"Downloading CUDA {version}...";
                 using (var client = new System.Net.WebClient())
                 {
                     client.DownloadProgressChanged += (s, e) =>
                     {
                         progress = e.ProgressPercentage / 100f;
-                        statusMessage = $"Descarregant CUDA {version}: {e.ProgressPercentage}%";
+                        statusMessage = $"Downloading CUDA {version}: {e.ProgressPercentage}%";
                         Repaint();
                     };
 
                     await client.DownloadFileTaskAsync(downloadUrl, installerPath);
                 }
 
-                AddLogMessage($"✓ CUDA {version} descarregat");
+                AddLogMessage($"✓ CUDA {version} downloaded");
 
-                // Executar instal·lador
-                statusMessage = $"Instal·lant CUDA {version}...";
-                AddLogMessage("Executant instal·lador CUDA...");
-                AddLogMessage("NOTA: Accepta els valors per defecte a l'instal·lador");
+                // Run installer
+                statusMessage = $"Installing CUDA {version}...";
+                AddLogMessage("Running CUDA installer...");
+                AddLogMessage("NOTE: Accept the default values in the installer");
 
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = installerPath,
                     Arguments = "-s",  // Silent install
                     UseShellExecute = true,
-                    Verb = "runas"  // Executar com administrador
+                    Verb = "runas"  // Run as administrator
                 };
 
                 var process = Process.Start(startInfo);
@@ -2361,24 +2361,24 @@ MÉS INFORMACIÓ:
 
                 if (process.ExitCode == 0)
                 {
-                    AddLogMessage($"✓ CUDA {version} instal·lat correctament");
+                    AddLogMessage($"✓ CUDA {version} installed correctly");
                     cudaToolkitInstalled = true;
                     detectedCudaToolkitVersion = version;
 
-                    // Actualitzar PATH
+                    // Update PATH
                     RepairCudaPath();
                 }
                 else
                 {
-                    AddLogMessage($"✗ Error instal·lant CUDA (codi: {process.ExitCode})");
+                    AddLogMessage($"✗ Error installing CUDA (code: {process.ExitCode})");
                 }
 
-                // Netejar
+                // Clean up
                 try { File.Delete(installerPath); } catch { }
             }
             catch (Exception ex)
             {
-                AddLogMessage($"Error instal·lant CUDA: {ex.Message}");
+                AddLogMessage($"Error installing CUDA: {ex.Message}");
             }
             finally
             {
@@ -2391,9 +2391,9 @@ MÉS INFORMACIÓ:
         {
             try
             {
-                AddLogMessage("Detectant instal·lació CUDA...");
+                AddLogMessage("Detecting CUDA installation...");
 
-                // 1. Comprovar nvcc
+                // 1. Check nvcc
                 var nvccOutput = await ExecuteCommand("nvcc", "--version");
                 if (!nvccOutput.Contains("ERROR") && nvccOutput.Contains("release"))
                 {
@@ -2403,23 +2403,23 @@ MÉS INFORMACIÓ:
                     {
                         detectedCudaToolkitVersion = match.Groups[1].Value;
                         cudaToolkitInstalled = true;
-                        AddLogMessage($"✓ CUDA Toolkit {detectedCudaToolkitVersion} detectat via nvcc");
+                        AddLogMessage($"✓ CUDA Toolkit {detectedCudaToolkitVersion} detected via nvcc");
                     }
                 }
 
-                // 2. Comprovar nvidia-smi
+                // 2. Check nvidia-smi
                 var smiOutput = await ExecuteCommand("nvidia-smi", "");
                 if (!smiOutput.Contains("ERROR") && smiOutput.Contains("CUDA Version"))
                 {
                     var match = System.Text.RegularExpressions.Regex.Match(smiOutput, @"CUDA Version:\s*(\d+\.\d+)");
                     if (match.Success)
                     {
-                        recommendedCudaVersion = $"CUDA {match.Groups[1].Value} (màxim suportat pel driver)";
-                        AddLogMessage($"✓ Driver NVIDIA detectat: {recommendedCudaVersion}");
+                        recommendedCudaVersion = $"CUDA {match.Groups[1].Value} (maximum supported by driver)";
+                        AddLogMessage($"✓ NVIDIA driver detected: {recommendedCudaVersion}");
                     }
                 }
 
-                // 3. Comprovar directoris d'instal·lació
+                // 3. Check installation directories
                 string[] cudaPaths = {
                     @"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA",
                     @"C:\Program Files\NVIDIA Corporation\CUDA"
@@ -2441,7 +2441,7 @@ MÉS INFORMACIÓ:
                                     detectedCudaToolkitVersion = versionMatch.Groups[1].Value;
                                     cudaToolkitInstalled = true;
                                 }
-                                AddLogMessage($"✓ CUDA Toolkit trobat a: {latestVersion}");
+                                AddLogMessage($"✓ CUDA Toolkit found at: {latestVersion}");
                             }
                         }
                     }
@@ -2449,12 +2449,12 @@ MÉS INFORMACIÓ:
 
                 if (!cudaToolkitInstalled)
                 {
-                    AddLogMessage("⚠ CUDA Toolkit no detectat al sistema");
+                    AddLogMessage("⚠ CUDA Toolkit not detected on the system");
                 }
             }
             catch (Exception ex)
             {
-                AddLogMessage($"Error detectant CUDA: {ex.Message}");
+                AddLogMessage($"Error detecting CUDA: {ex.Message}");
             }
         }
 
@@ -2462,11 +2462,11 @@ MÉS INFORMACIÓ:
         {
             try
             {
-                AddLogMessage("=== VERIFICACIÓ COMPLETA D'INSTAL·LACIÓ ===");
+                AddLogMessage("=== FULL INSTALLATION VERIFICATION ===");
 
                 string pythonCmd = useCondaEnv ? $"conda run -n {condaEnvName} python" : pythonPath;
 
-                // Script de verificació completa
+                // Full verification script
                 string verifyScript = @"-c ""
 import sys
 print('Python:', sys.version)
@@ -2482,11 +2482,11 @@ try:
         print(f'  cuDNN version: {torch.backends.cudnn.version()}')
         print(f'  GPU: {torch.cuda.get_device_name(0)}')
 except ImportError:
-    print('✗ PyTorch no instal·lat')
+    print('✗ PyTorch not installed')
 
 print('-' * 50)
 
-# Dependències principals
+# Main dependencies
 deps = {
     'diffusers': 'Diffusers',
     'transformers': 'Transformers', 
@@ -2515,13 +2515,13 @@ try:
 except ImportError:
     print('✗ Hunyuan3D package')
 
-# Mòduls opcionals
-print('\nMòduls opcionals:')
+# Optional modules
+print('\nOptional modules:')
 try:
     import custom_rasterizer_kernel
     print('✓ Custom Rasterizer')
 except ImportError:
-    print('⚠ Custom Rasterizer (opcional)')
+    print('⚠ Custom Rasterizer (optional)')
 """;
 
                 var output = await ExecuteCommand(pythonCmd, verifyScript);
@@ -2530,25 +2530,25 @@ except ImportError:
                 if (output.Contains("✓ Hunyuan3D package"))
                 {
                     EditorUtility.DisplayDialog(
-                        "Verificació Completada",
-                        "Hunyuan3D està instal·lat i llest per usar!\n\n" +
-                        "Revisa els logs per veure l'estat detallat.",
-                        "Perfecte!"
+                        "Verification Complete",
+                        "Hunyuan3D is installed and ready to use!\n\n" +
+                        "Check the logs for a detailed status.",
+                        "Great!"
                     );
                 }
                 else
                 {
                     EditorUtility.DisplayDialog(
-                        "Verificació Incompleta",
-                        "Algunes dependències poden faltar.\n\n" +
-                        "Revisa els logs i executa 'Instal·lar Tot' si cal.",
-                        "D'acord"
+                        "Verification Incomplete",
+                        "Some dependencies may be missing.\n\n" +
+                        "Check the logs and run 'Install All' if necessary.",
+                        "OK"
                     );
                 }
             }
             catch (Exception ex)
             {
-                AddLogMessage($"Error durant verificació: {ex.Message}");
+                AddLogMessage($"Error during verification: {ex.Message}");
             }
         }
 
@@ -2556,7 +2556,7 @@ except ImportError:
         {
             try
             {
-                AddLogMessage("Reparant PATH de CUDA...");
+                AddLogMessage("Repairing CUDA PATH...");
 
                 string[] cudaPaths = {
                     @"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin",
@@ -2574,30 +2574,30 @@ except ImportError:
                     {
                         currentPath = cudaPath + ";" + currentPath;
                         pathUpdated = true;
-                        AddLogMessage($"✓ Afegit al PATH: {cudaPath}");
+                        AddLogMessage($"✓ Added to PATH: {cudaPath}");
                     }
                 }
 
                 if (pathUpdated)
                 {
                     Environment.SetEnvironmentVariable("PATH", currentPath, EnvironmentVariableTarget.User);
-                    AddLogMessage("✓ PATH actualitzat - pot ser necessari reiniciar Unity");
+                    AddLogMessage("✓ PATH updated - it may be necessary to restart Unity");
 
                     EditorUtility.DisplayDialog(
-                        "PATH Actualitzat",
-                        "El PATH de CUDA s'ha actualitzat.\n\n" +
-                        "Pot ser necessari reiniciar Unity perquè els canvis tinguin efecte.",
-                        "D'acord"
+                        "PATH Updated",
+                        "The CUDA PATH has been updated.\n\n" +
+                        "It may be necessary to restart Unity for the changes to take effect.",
+                        "OK"
                     );
                 }
                 else
                 {
-                    AddLogMessage("ℹ No s'han trobat paths CUDA per afegir");
+                    AddLogMessage("ℹ No CUDA paths found to add");
                 }
             }
             catch (Exception ex)
             {
-                AddLogMessage($"Error reparant PATH: {ex.Message}");
+                AddLogMessage($"Error repairing PATH: {ex.Message}");
             }
         }
 
@@ -2605,7 +2605,7 @@ except ImportError:
         {
             string allLogs = string.Join("\n", logMessages);
             GUIUtility.systemCopyBuffer = allLogs;
-            AddLogMessage("Logs copiats al portapapers!");
+            AddLogMessage("Logs copied to clipboard!");
         }
 
         private void AddLogMessage(string message)
@@ -2615,13 +2615,13 @@ except ImportError:
                 string timestamp = DateTime.Now.ToString("HH:mm:ss");
                 logMessages.Add($"[{timestamp}] {message}");
 
-                // Limitar a 1000 missatges
+                // Limit to 1000 messages
                 if (logMessages.Count > 1000)
                 {
                     logMessages.RemoveAt(0);
                 }
 
-                // Auto-scroll al final
+                // Auto-scroll to the bottom
                 scrollPosition.y = float.MaxValue;
 
                 Repaint();
@@ -2650,7 +2650,7 @@ except ImportError:
                     WorkingDirectory = workingDirectory
                 };
 
-                // Propagar CUDA_HOME als subprocessos
+                // Propagate CUDA_HOME to subprocesses
                 SetCudaEnvironmentVariables(startInfo);
 
                 var process = new Process { StartInfo = startInfo };
@@ -2684,7 +2684,7 @@ except ImportError:
 
         public void SetCudaEnvironmentVariables(ProcessStartInfo startInfo)
         {
-            // Busca la instal·lació de CUDA més recent
+            // Search for the most recent CUDA installation
             string[] possibleCudaDirs = {
                 @"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4",
                 @"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1",
@@ -2704,12 +2704,12 @@ except ImportError:
 
             if (!string.IsNullOrEmpty(cudaHome))
             {
-                // Assegurar que les variables d'entorn es propaguen als subprocessos
+                // Ensure environment variables are propagated to subprocesses
                 startInfo.EnvironmentVariables["CUDA_HOME"] = cudaHome;
                 startInfo.EnvironmentVariables["CUDA_PATH"] = cudaHome;
-                startInfo.EnvironmentVariables["CUDA_PATH_V12_4"] = cudaHome; // Per CUDA 12.4
+                startInfo.EnvironmentVariables["CUDA_PATH_V12_4"] = cudaHome; // For CUDA 12.4
 
-                // Afegir bin al PATH
+                // Add bin to PATH
                 string cudaBin = Path.Combine(cudaHome, "bin");
                 string currentPath = startInfo.EnvironmentVariables["PATH"] ?? Environment.GetEnvironmentVariable("PATH");
                 if (!currentPath.Contains(cudaBin))
@@ -2717,11 +2717,11 @@ except ImportError:
                     startInfo.EnvironmentVariables["PATH"] = cudaBin + ";" + currentPath;
                 }
 
-              //  AddLogMessage($"✓ Variables CUDA establertes per al subprocés: {cudaHome}");
+              //  AddLogMessage($"✓ CUDA variables set for subprocess: {cudaHome}");
             }
             else
             {
-               // AddLogMessage("⚠ No s'ha trobat cap instal·lació de CUDA");
+               // AddLogMessage("⚠ No CUDA installation found");
             }
         }
 
@@ -2729,45 +2729,45 @@ except ImportError:
         {
             try
             {
-                AddLogMessage("Verificant UV...");
+                AddLogMessage("Verifying UV...");
 
-                // Comprovar si UV ja està instal·lat
+                // Check if UV is already installed
                 var uvCheck = await ExecuteCommand("uv", "--version");
                 if (!uvCheck.Contains("ERROR") && uvCheck.Contains("uv"))
                 {
-                    AddLogMessage($"✓ UV ja instal·lat: {uvCheck.Trim()}");
+                    AddLogMessage($"✓ UV already installed: {uvCheck.Trim()}");
                     return true;
                 }
 
-                AddLogMessage("UV no detectat. Instal·lant...");
+                AddLogMessage("UV not detected. Installing...");
 
-                // Instal·lar UV via PowerShell (mètode oficial per Windows)
+                // Install UV via PowerShell (official method for Windows)
                 string installScript = @"
-# Instal·lar UV
-Write-Host 'Instal·lant UV Package Manager...'
+# Install UV
+Write-Host 'Installing UV Package Manager...'
 try {
-    # Mètode 1: Instal·lador oficial
+    # Method 1: Official installer
     Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression
     
-    # Verificar instal·lació
+    # Verify installation
     $uvPath = Get-Command uv -ErrorAction SilentlyContinue
     if ($uvPath) {
-        Write-Host '✓ UV instal·lat correctament'
+        Write-Host '✓ UV installed correctly'
         exit 0
     }
     
-    # Mètode 2: Via pip si falla
-    Write-Host 'Intentant instal·lar via pip...'
+    # Method 2: Via pip if it fails
+    Write-Host 'Trying to install via pip...'
     pip install uv
     
-    # Verificar novament
+    # Verify again
     $uvPath = Get-Command uv -ErrorAction SilentlyContinue
     if ($uvPath) {
-        Write-Host '✓ UV instal·lat via pip'
+        Write-Host '✓ UV installed via pip'
         exit 0
     }
     
-    Write-Host '✗ No s''ha pogut instal·lar UV'
+    Write-Host '✗ Could not install UV'
     exit 1
 }
 catch {
@@ -2783,33 +2783,33 @@ catch {
                 {
                     var output = await ExecuteCommand("powershell", $"-ExecutionPolicy Bypass -File \"{tempScript}\"");
 
-                    if (output.Contains("✓ UV instal·lat"))
+                    if (output.Contains("✓ UV installed"))
                     {
-                        AddLogMessage("✓ UV instal·lat correctament");
+                        AddLogMessage("✓ UV installed correctly");
 
-                        // Actualitzar PATH si cal
+                        // Update PATH if necessary
                         await UpdatePathForUV();
 
-                        // Verificar que funciona
+                        // Verify it works
                         var finalCheck = await ExecuteCommand("uv", "--version");
                         if (!finalCheck.Contains("ERROR"))
                         {
-                            AddLogMessage($"✓ UV verificat: {finalCheck.Trim()}");
+                            AddLogMessage($"✓ UV verified: {finalCheck.Trim()}");
                             return true;
                         }
                     }
 
-                    AddLogMessage("⚠ UV instal·lat però no accessible. Pot ser necessari reiniciar el terminal.");
+                    AddLogMessage("⚠ UV installed but not accessible. It may be necessary to restart the terminal.");
 
-                    // Oferir instruccions manuals
+                    // Offer manual instructions
                     EditorUtility.DisplayDialog(
-                        "UV Instal·lat",
-                        "UV s'ha instal·lat però pot no ser accessible fins reiniciar.\n\n" +
-                        "Si continua sense funcionar:\n" +
-                        "1. Obre PowerShell com administrador\n" +
-                        "2. Executa: Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression\n" +
-                        "3. Reinicia Unity",
-                        "D'acord"
+                        "UV Installed",
+                        "UV has been installed but may not be accessible until restart.\n\n" +
+                        "If it still doesn't work:\n" +
+                        "1. Open PowerShell as administrator\n" +
+                        "2. Run: Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression\n" +
+                        "3. Restart Unity",
+                        "OK"
                     );
 
                     return false;
@@ -2821,17 +2821,17 @@ catch {
             }
             catch (Exception ex)
             {
-                AddLogMessage($"✗ Error instal·lant UV: {ex.Message}");
+                AddLogMessage($"✗ Error installing UV: {ex.Message}");
 
-                // Mostrar instruccions alternatives
+                // Show alternative instructions
                 bool tryManual = EditorUtility.DisplayDialog(
-                    "Error instal·lant UV",
-                    "No s'ha pogut instal·lar UV automàticament.\n\n" +
-                    "Opcions:\n" +
-                    "• Instal·lar manualment des de: https://docs.astral.sh/uv/\n" +
-                    "• Usar pip tradicional (més lent)\n\n" +
-                    "Vols obrir la documentació d'UV?",
-                    "Obrir Documentació", "Cancel·lar"
+                    "Error installing UV",
+                    "Could not install UV automatically.\n\n" +
+                    "Options:\n" +
+                    "• Install manually from: https://docs.astral.sh/uv/\n" +
+                    "• Use traditional pip (slower)\n\n" +
+                    "Do you want to open the UV documentation?",
+                    "Open Documentation", "Cancel"
                 );
 
                 if (tryManual)
@@ -2847,7 +2847,7 @@ catch {
         {
             try
             {
-                // Possibles ubicacions d'UV
+                // Possible UV locations
                 string[] uvPaths = {
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "uv", "bin"),
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cargo", "bin"),
@@ -2861,13 +2861,13 @@ catch {
                 {
                     if (Directory.Exists(uvPath) && !currentPath.Contains(uvPath))
                     {
-                        // Verificar si UV existeix en aquest path
+                        // Verify if UV exists in this path
                         string uvExe = Path.Combine(uvPath, "uv.exe");
                         if (File.Exists(uvExe))
                         {
                             currentPath = uvPath + ";" + currentPath;
                             pathUpdated = true;
-                            AddLogMessage($"✓ Afegit UV al PATH: {uvPath}");
+                            AddLogMessage($"✓ Added UV to PATH: {uvPath}");
                             break;
                         }
                     }
@@ -2876,30 +2876,30 @@ catch {
                 if (pathUpdated)
                 {
                     Environment.SetEnvironmentVariable("PATH", currentPath, EnvironmentVariableTarget.User);
-                    AddLogMessage("✓ PATH actualitzat amb UV");
+                    AddLogMessage("✓ PATH updated with UV");
                 }
             }
             catch (Exception ex)
             {
-                AddLogMessage($"⚠ Error actualitzant PATH per UV: {ex.Message}");
+                AddLogMessage($"⚠ Error updating PATH for UV: {ex.Message}");
             }
         }
         private async Task EnsureSetuptoolsInstalled(string pythonCmd)
         {
-            AddLogMessage("Comprovant setuptools...");
+            AddLogMessage("Checking setuptools...");
             var output = await ExecuteCommand(pythonCmd, "-m pip show setuptools");
             if (output.Contains("Name: setuptools"))
             {
-                AddLogMessage("✓ setuptools ja està instal·lat");
+                AddLogMessage("✓ setuptools is already installed");
                 return;
             }
-            AddLogMessage("Instal·lant setuptools...");
+            AddLogMessage("Installing setuptools...");
             var install = await ExecuteCommand(pythonCmd, "-m pip install setuptools");
             AddLogMessage(install);
         }
         private void SetCudaHomeEnv()
         {
-            // Busca la instal·lació de CUDA més recent
+            // Search for the most recent CUDA installation
             string[] possibleCudaDirs = {
                 @"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4",
                 @"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1",
@@ -2912,12 +2912,12 @@ catch {
                 if (Directory.Exists(dir))
                 {
                     Environment.SetEnvironmentVariable("CUDA_HOME", dir, EnvironmentVariableTarget.Process);
-                    AddLogMessage($"✓ Variable d'entorn CUDA_HOME establerta a: {dir}");
+                    AddLogMessage($"✓ CUDA_HOME environment variable set to: {dir}");
                     return;
                 }
             }
 
-            AddLogMessage("⚠ No s'ha trobat cap instal·lació de CUDA per establir CUDA_HOME");
+            AddLogMessage("⚠ No CUDA installation found to set CUDA_HOME");
         }
     }
 }
