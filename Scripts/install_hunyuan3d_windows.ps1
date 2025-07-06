@@ -1,5 +1,7 @@
 # Script d'instal·lació de Hunyuan3D-2 per Windows
 # Basat en https://github.com/sdbds/Hunyuan3D-2-for-windows
+# Colors per output
+
 
 param(
     [string]$InstallPath = $PSScriptRoot,
@@ -9,21 +11,6 @@ param(
     [switch]$SkipModelDownload = $false
 )
 
-Set-Location $InstallPath
-
-# Configuració d'entorn
-$Env:HF_HOME = "huggingface"
-$Env:PIP_DISABLE_PIP_VERSION_CHECK = 1
-$Env:PIP_NO_CACHE_DIR = 1
-$Env:UV_EXTRA_INDEX_URL = if ($UseCUDA12) { "https://download.pytorch.org/whl/cu124" } else { "https://download.pytorch.org/whl/cu118" }
-$Env:UV_CACHE_DIR = "${env:LOCALAPPDATA}/uv/cache"
-$Env:UV_NO_BUILD_ISOLATION = 1
-$Env:UV_NO_CACHE = 0
-$Env:UV_LINK_MODE = "symlink"
-$Env:GIT_LFS_SKIP_SMUDGE = 1
-$Env:CUDA_HOME = "${env:CUDA_PATH}"
-
-# Colors per output
 function Write-ColorOutput($ForegroundColor) {
     $fc = $host.UI.RawUI.ForegroundColor
     $host.UI.RawUI.ForegroundColor = $ForegroundColor
@@ -61,6 +48,32 @@ function Check {
         InstallFail
     }
 }
+
+# Clonar repositori Hunyuan3D-2 si no existeix
+$repoPath = $InstallPath
+if (-not (Test-Path $repoPath)) {
+    Write-Info "📥 Clonant repositori Hunyuan3D-2 for windows..."
+    git clone --depth 1 https://github.com/sdbds/Hunyuan3D-2-for-windows.git $repoPath
+    Check "❌ Error clonant repositori"
+    Write-Success "✓ Repositori clonat"
+} else {
+    Write-Info "✓ Repositori ja existeix a $repoPath"
+}
+
+Set-Location $InstallPath
+
+# Configuració d'entorn
+$Env:HF_HOME = "huggingface"
+$Env:PIP_DISABLE_PIP_VERSION_CHECK = 1
+$Env:PIP_NO_CACHE_DIR = 1
+$Env:UV_EXTRA_INDEX_URL = if ($UseCUDA12) { "https://download.pytorch.org/whl/cu124" } else { "https://download.pytorch.org/whl/cu118" }
+$Env:UV_CACHE_DIR = "${env:LOCALAPPDATA}/uv/cache"
+$Env:UV_NO_BUILD_ISOLATION = 1
+$Env:UV_NO_CACHE = 0
+$Env:UV_LINK_MODE = "symlink"
+$Env:GIT_LFS_SKIP_SMUDGE = 1
+$Env:CUDA_HOME = "${env:CUDA_PATH}"
+
 
 # Banner
 Write-Info @"
@@ -174,16 +187,7 @@ if ($UseCUDA12) {
 Check "❌ Error instal·lant PyTorch"
 Write-Success "✓ PyTorch instal·lat"
 
-# Clonar repositori Hunyuan3D-2 si no existeix
-$repoPath = "Hunyuan2-3D-for-windows"
-if (-not (Test-Path $repoPath)) {
-    Write-Info "📥 Clonant repositori Hunyuan3D-2 for windows..."
-    git clone --depth 1 https://github.com/sdbds/Hunyuan3D-2-for-windows.git $repoPath
-    Check "❌ Error clonant repositori"
-    Write-Success "✓ Repositori clonat"
-} else {
-    Write-Info "✓ Repositori ja existeix a $repoPath"
-}
+
 
 # Crear requirements-uv.txt optimitzat
 Write-Info "📝 Creant fitxer de requirements optimitzat..."
@@ -195,6 +199,9 @@ accelerate
 omegaconf
 einops
 tqdm
+mmgp
+optimum
+optimum.quanto
 
 # Image processing
 opencv-python
@@ -288,10 +295,8 @@ catch {
 }
 
 # bpy (Blender) - només si l'usuari ho vol explícitament
-$installBpy = Read-Host "Vols instal·lar Blender Python API (bpy)? Pot trigar molt temps (S/N)"
-if ($installBpy -eq 'S' -or $installBpy -eq 's') {
-    Write-Info "📦 Instal·lant Blender Python API (això pot trigar 5-10 minuts)..."
-    try {
+Write-Info "📦 Instal·lant Blender Python API (això pot trigar 5-10 minuts)..."
+try {
         & $uvPath pip install bpy --quiet
         Write-Success "  ✓ Blender Python API instal·lat"
     }
@@ -299,7 +304,6 @@ if ($installBpy -eq 'S' -or $installBpy -eq 's') {
         Write-Error "  ⚠️ No s'ha pogut instal·lar bpy"
         Write-Info "    Això no afectarà la funcionalitat principal"
     }
-}
 
 # Intentar compilar mòduls C++ opcionals
 Write-Info "🔨 Intentant compilar mòduls C++ opcionals..."
@@ -318,7 +322,7 @@ if (Test-Path $custRasterPath) {
     try {
         # Usar uv pip per executar setup.py dins l'entorn virtual
         & $uvPath pip install torch torchvision torchaudio
-        & $uvPath pip install . --no-deps --force-reinstall --quiet
+        & $uvPath pip install . --force-reinstall --quiet
         Write-Success "  ✓ custom_rasterizer compilat"
     }
     catch {
@@ -333,7 +337,7 @@ if (Test-Path $diffRendererPath) {
     Push-Location $diffRendererPath
     try {
         # Usar uv pip per executar setup.py dins l'entorn virtual
-        & $uvPath pip install . --no-deps --force-reinstall --quiet
+        & $uvPath pip install . --force-reinstall --quiet
         Write-Success "  ✓ differentiable_renderer compilat"
     }
     catch {
@@ -356,46 +360,6 @@ if ($installSuccess) {
     Write-Error "⚠️ Possible error instal·lant Hunyuan3D-2"
 }
 
-# Descarregar models si no s'ha saltat
-if (-not $SkipModelDownload) {
-    Write-Info "📥 Vols descarregar els models pre-entrenats? (~10GB)"
-    $downloadModels = Read-Host "(S/N)"
-    
-    if ($downloadModels -eq 'S' -or $downloadModels -eq 's') {
-        Write-Info "Descarregant models..."
-        
-        # Crear directori per models
-        $modelsDir = "models"
-        New-Item -ItemType Directory -Force -Path $modelsDir | Out-Null
-        
-        # Script Python per descarregar models
-        $downloadScript = @"
-from huggingface_hub import snapshot_download
-import os
-
-models = [
-    'tencent/Hunyuan3D-2',
-    'tencent/Hunyuan3D-2mini'
-]
-
-for model in models:
-    print(f'Descarregant {model}...')
-    try:
-        snapshot_download(
-            repo_id=model,
-            local_dir=f'models/{model.split("/")[-1]}',
-            local_dir_use_symlinks=False
-        )
-        print(f'✓ {model} descarregat')
-    except Exception as e:
-        print(f'✗ Error descarregant {model}: {e}')
-"@
-        
-        $downloadScript | Out-File -FilePath "download_models.py" -Encoding UTF8
-        python download_models.py
-        Remove-Item "download_models.py"
-    }
-}
 
 # Verificació final
 # Verificació final ampliada
@@ -523,33 +487,6 @@ pause
 "@
 
 $testScript | Out-File -FilePath "test_install.bat" -Encoding ASCII
-
-Write-Success @"
-
-✨ Instal·lació completada! ✨
-
-📁 Estructura creada:
-   $InstallPath\
-   ├── .venv\                 (Entorn Python)
-   ├── Hunyuan3D-2\           (Codi font)
-   ├── models\                (Models pre-entrenats)
-   ├── start_hunyuan3d.bat    (Script d'inici)
-   └── test_install.bat       (Test ràpid)
-
-🚀 Per començar:
-   1. Executa: start_hunyuan3d.bat
-   2. Test ràpid: test_install.bat
-   3. O activa manualment: .venv\Scripts\activate
-
-⚡ Recomanacions per Unity:
-   - Usa --file_type obj per màxima compatibilitat
-   - Evita --compile si veus errors de Triton
-   - Usa --low_vram_mode si tens poca VRAM
-
-📖 Documentació:
-   https://github.com/Tencent-Hunyuan/Hunyuan3D-2
-
-"@
 
 Write-Output "Prem qualsevol tecla per sortir..."
 Read-Host | Out-Null
