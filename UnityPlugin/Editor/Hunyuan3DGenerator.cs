@@ -35,6 +35,28 @@ namespace Hunyuan3D.Editor
         // File type options
         private readonly string[] fileTypeOptions = { "obj", "fbx", "glb", "ply", "stl" };
         private readonly string[] deviceOptions = { "cuda", "cpu", "mps" };
+        
+        // Model Path options
+        private readonly string[] modelPathOptions = {
+            "tencent/Hunyuan3D-2mini",
+            "tencent/Hunyuan3D-2mv", 
+            "tencent/Hunyuan3D-2"
+        };
+
+        // Subfolder options
+        private readonly string[] subfolderOptions = {
+            "hunyuan3d-dit-v2-mini",
+            "hunyuan3d-dit-v2-mv",
+            "hunyuan3d-dit-v2-0",
+            "hunyuan3d-dit-v2-mini-turbo",
+            "hunyuan3d-dit-v2-mv-turbo",
+            "hunyuan3d-dit-v2-0-turbo"
+        };
+
+        // Texture Model Path options
+        private readonly string[] textureModelPathOptions = {
+            "tencent/Hunyuan3D-2"
+        };
         #endregion
 
         #region Unity Menu
@@ -274,9 +296,23 @@ namespace Hunyuan3D.Editor
         {
             EditorGUILayout.LabelField("Model Parameters", EditorStyles.boldLabel);
             
-            config.modelPath = EditorGUILayout.TextField("Model Path:", config.modelPath);
-            config.subfolder = EditorGUILayout.TextField("Subfolder:", config.subfolder);
-            config.texgenModelPath = EditorGUILayout.TextField("Texture Model Path:", config.texgenModelPath);
+            // Model Path dropdown
+            int modelPathIndex = System.Array.IndexOf(modelPathOptions, config.modelPath);
+            if (modelPathIndex == -1) modelPathIndex = 2; // Default to Hunyuan3D-2
+            modelPathIndex = EditorGUILayout.Popup("Model Path:", modelPathIndex, modelPathOptions);
+            config.modelPath = modelPathOptions[modelPathIndex];
+            
+            // Subfolder dropdown
+            int subfolderIndex = System.Array.IndexOf(subfolderOptions, config.subfolder);
+            if (subfolderIndex == -1) subfolderIndex = 2; // Default to hunyuan3d-dit-v2-0
+            subfolderIndex = EditorGUILayout.Popup("Subfolder:", subfolderIndex, subfolderOptions);
+            config.subfolder = subfolderOptions[subfolderIndex];
+            
+            // Texture Model Path dropdown
+            int textureModelPathIndex = System.Array.IndexOf(textureModelPathOptions, config.texgenModelPath);
+            if (textureModelPathIndex == -1) textureModelPathIndex = 0; // Default to first option
+            textureModelPathIndex = EditorGUILayout.Popup("Texture Model Path:", textureModelPathIndex, textureModelPathOptions);
+            config.texgenModelPath = textureModelPathOptions[textureModelPathIndex];
             
             int deviceIndex = System.Array.IndexOf(deviceOptions, config.device);
             if (deviceIndex == -1) deviceIndex = 0;
@@ -284,6 +320,15 @@ namespace Hunyuan3D.Editor
             config.device = deviceOptions[deviceIndex];
             
             config.mcAlgo = EditorGUILayout.TextField("MC Algorithm:", config.mcAlgo);
+            
+            // Show selected configuration for reference
+            EditorGUILayout.Space(5);
+            EditorGUILayout.LabelField("Selected Configuration:", EditorStyles.miniLabel);
+            EditorGUI.indentLevel++;
+            EditorGUILayout.LabelField($"Model: {config.modelPath}", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField($"Subfolder: {config.subfolder}", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField($"Texture: {config.texgenModelPath}", EditorStyles.miniLabel);
+            EditorGUI.indentLevel--;
         }
 
         private void DrawGenerationParameters()
