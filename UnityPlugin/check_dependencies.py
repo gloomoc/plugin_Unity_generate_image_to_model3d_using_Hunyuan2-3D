@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Script d'instal·lació i verificació de dependències per al plugin Hunyuan3D Unity
-Aquest script ajuda a configurar l'entorn Python necessari per executar el plugin
+Installation and dependency verification script for the Hunyuan3D Unity plugin
+This script helps configure the Python environment necessary to run the plugin
 """
 
 import os
@@ -13,61 +13,61 @@ import importlib.util
 from pathlib import Path
 
 def check_python_version():
-    """Comprova que la versió de Python sigui compatible"""
-    print("Comprovant versió de Python...")
+    """Checks that the Python version is compatible"""
+    print("Checking Python version...")
     
     if sys.version_info < (3, 8):
-        print("❌ Error: Python 3.8 o superior és necessari")
-        print(f"   Versió actual: {sys.version}")
+        print("❌ Error: Python 3.8 or higher is required")
+        print(f"   Current version: {sys.version}")
         return False
     
-    print(f"✅ Python {sys.version_info.major}.{sys.version_info.minor} és compatible")
+    print(f"✅ Python {sys.version_info.major}.{sys.version_info.minor} is compatible")
     return True
 
 def check_package(package_name, import_name=None):
-    """Comprova si un paquet està instal·lat"""
+    """Checks if a package is installed"""
     if import_name is None:
         import_name = package_name
     
     try:
         importlib.util.find_spec(import_name)
-        print(f"✅ {package_name} està instal·lat")
+        print(f"✅ {package_name} is installed")
         return True
     except ImportError:
-        print(f"❌ {package_name} no està instal·lat")
+        print(f"❌ {package_name} is not installed")
         return False
 
 def install_package(package_name):
-    """Instal·la un paquet amb pip"""
-    print(f"Instal·lant {package_name}...")
+    """Installs a package with pip"""
+    print(f"Installing {package_name}...")
     try:
         subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
-        print(f"✅ {package_name} instal·lat correctament")
+        print(f"✅ {package_name} installed successfully")
         return True
     except subprocess.CalledProcessError:
-        print(f"❌ Error instal·lant {package_name}")
+        print(f"❌ Error installing {package_name}")
         return False
 
 def check_gpu_support():
-    """Comprova si hi ha suport per GPU"""
-    print("\nComprovant suport GPU...")
+    """Checks if there is GPU support"""
+    print("\nChecking GPU support...")
     
     try:
         import torch
         if torch.cuda.is_available():
-            print(f"✅ CUDA disponible - {torch.cuda.get_device_name(0)}")
-            print(f"   Versió CUDA: {torch.version.cuda}")
+            print(f"✅ CUDA available - {torch.cuda.get_device_name(0)}")
+            print(f"   CUDA version: {torch.version.cuda}")
             return True
         else:
-            print("⚠️  CUDA no disponible - s'utilitzarà CPU")
+            print("⚠️  CUDA not available - CPU will be used")
             return False
     except ImportError:
-        print("❌ PyTorch no està instal·lat")
+        print("❌ PyTorch is not installed")
         return False
 
 def check_scripts():
-    """Comprova si els scripts necessaris existeixen"""
-    print("\nComprovant scripts necessaris...")
+    """Checks if the necessary scripts exist"""
+    print("\nChecking necessary scripts...")
     
     current_dir = Path(__file__).parent
     scripts = [
@@ -79,25 +79,25 @@ def check_scripts():
     for script in scripts:
         script_path = current_dir / script
         if script_path.exists():
-            print(f"✅ {script} trobat")
+            print(f"✅ {script} found")
         else:
-            print(f"❌ {script} no trobat a {current_dir}")
+            print(f"❌ {script} not found in {current_dir}")
             all_found = False
     
     return all_found
 
 def main():
-    """Funció principal de verificació i instal·lació"""
+    """Main verification and installation function"""
     print("=" * 60)
-    print("VERIFICADOR DE DEPENDÈNCIES HUNYUAN3D UNITY PLUGIN")
+    print("HUNYUAN3D UNITY PLUGIN DEPENDENCY VERIFIER")
     print("=" * 60)
     
-    # Comprovar Python
+    # Check Python
     if not check_python_version():
         return False
     
-    # Dependències bàsiques
-    print("\nComprovant dependències bàsiques...")
+    # Basic dependencies
+    print("\nChecking basic dependencies...")
     basic_packages = [
         ("torch", "torch"),
         ("pillow", "PIL"),
@@ -112,33 +112,33 @@ def main():
         if not check_package(package_name, import_name):
             missing_packages.append(package_name)
     
-    # Instal·lar paquets que falten
+    # Install missing packages
     if missing_packages:
-        print(f"\nFalten {len(missing_packages)} paquets:")
+        print(f"\n{len(missing_packages)} packages missing:")
         for package in missing_packages:
             print(f"  - {package}")
         
-        response = input("\nVols instal·lar els paquets que falten? (s/n): ")
+        response = input("\nDo you want to install the missing packages? (y/n): ")
         if response.lower() in ['s', 'sí', 'si', 'y', 'yes']:
             for package in missing_packages:
                 install_package(package)
         else:
-            print("⚠️  Alguns paquets no estan instal·lats. El plugin pot no funcionar correctament.")
+            print("⚠️  Some packages are not installed. The plugin may not work correctly.")
     
-    # Comprovar suport GPU
+    # Check GPU support
     check_gpu_support()
     
-    # Comprovar scripts
+    # Check scripts
     if not check_scripts():
-        print("\n⚠️  Alguns scripts no s'han trobat. Assegura't que estiguin al mateix directori.")
+        print("\n⚠️  Some scripts were not found. Make sure they are in the same directory.")
     
-    # Resum final
+    # Final summary
     print("\n" + "=" * 60)
-    print("RESUM DE LA CONFIGURACIÓ")
+    print("CONFIGURATION SUMMARY")
     print("=" * 60)
     
-    # Recomprovar tot
-    print("Estat de les dependències:")
+    # Recheck everything
+    print("Dependency status:")
     all_ok = True
     
     for package_name, import_name in basic_packages:
@@ -148,21 +148,21 @@ def main():
             all_ok = False
     
     if all_ok:
-        print("\n🎉 Totes les dependències estan instal·lades!")
-        print("El plugin Hunyuan3D Unity està llest per utilitzar.")
+        print("\n🎉 All dependencies are installed!")
+        print("The Hunyuan3D Unity plugin is ready to use.")
         
-        # Proporcionar exemples d'ús
-        print("\nExemples d'ús:")
-        print("1. Processar una imatge:")
-        print("   python batch_hunyuan3d.py imatge.jpg")
-        print("\n2. Processar una carpeta:")
-        print("   python batch_hunyuan3d.py carpeta_imatges/")
-        print("\n3. Eliminar fons d'una imatge:")
-        print("   python remove_background.py imatge.jpg sortida.png")
+        # Provide usage examples
+        print("\nUsage examples:")
+        print("1. Process an image:")
+        print("   python batch_hunyuan3d.py image.jpg")
+        print("\n2. Process a folder:")
+        print("   python batch_hunyuan3d.py images_folder/")
+        print("\n3. Remove background from an image:")
+        print("   python remove_background.py image.jpg output.png")
         
     else:
-        print("\n⚠️  Algunes dependències falten. El plugin pot no funcionar correctament.")
-        print("Executa aquest script de nou per instal·lar les dependències que falten.")
+        print("\n⚠️  Some dependencies are missing. The plugin may not work correctly.")
+        print("Run this script again to install the missing dependencies.")
     
     return all_ok
 
@@ -171,8 +171,8 @@ if __name__ == "__main__":
         success = main()
         sys.exit(0 if success else 1)
     except KeyboardInterrupt:
-        print("\n\nInstal·lació cancel·lada per l'usuari.")
+        print("\n\nInstallation cancelled by user.")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ Error inesperat: {e}")
+        print(f"\n❌ Unexpected error: {e}")
         sys.exit(1)

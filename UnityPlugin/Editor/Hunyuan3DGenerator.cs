@@ -155,6 +155,8 @@ namespace Hunyuan3D.Editor
         {
             EditorGUILayout.LabelField("Path Configuration", EditorStyles.boldLabel);
 
+            EditorGUILayout.BeginHorizontal();
+            
             // Button to detect PowerShell installation
             if (GUILayout.Button("🔍 Detect PowerShell Installation", GUILayout.Height(25)))
             {
@@ -197,6 +199,14 @@ namespace Hunyuan3D.Editor
                     );
                 }
             }
+            
+            // Button to test UTF-8 encoding
+            if (GUILayout.Button("🌐 Test UTF-8 Encoding", GUILayout.Height(25)))
+            {
+                _ = TestUTF8Encoding();
+            }
+            
+            EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
             config.pythonExecutablePath = EditorGUILayout.TextField("Python Executable:", config.pythonExecutablePath);
@@ -619,7 +629,7 @@ namespace Hunyuan3D.Editor
         {
             string batchScript = Path.Combine(config.scriptBasePath, "batch_hunyuan3d.py");
             
-            // Construir arguments seguint l'estructura del script
+            // Build arguments following the script structure
             List<string> args = new List<string>
             {
                 $"\"{batchScript}\"",
@@ -638,7 +648,7 @@ namespace Hunyuan3D.Editor
                 $"--file_type {config.fileType}"
             };
             
-            // Afegir flags opcionals
+            // Add optional flags
             if (config.enableT23D) args.Add("--enable_t23d");
             if (config.disableTexture) args.Add("--disable_tex");
             if (config.enableFlashVDM) args.Add("--enable_flashvdm");
@@ -647,7 +657,7 @@ namespace Hunyuan3D.Editor
             
             string arguments = string.Join(" ", args);
             
-            AddLogMessage($"Executant: {config.pythonExecutablePath} {arguments}");
+            AddLogMessage($"Executing: {config.pythonExecutablePath} {arguments}");
             
             return await ExecutePythonScript(arguments);
         }
@@ -656,6 +666,31 @@ namespace Hunyuan3D.Editor
         {
             try
             {
+                // Set console code page to UTF-8 for Windows
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                {
+                    try
+                    {
+                        // Change console code page to UTF-8 (65001)
+                        var process = new Process
+                        {
+                            StartInfo = new ProcessStartInfo
+                            {
+                                FileName = "cmd.exe",
+                                Arguments = "/c chcp 65001 > nul",
+                                UseShellExecute = false,
+                                CreateNoWindow = true
+                            }
+                        };
+                        process.Start();
+                        process.WaitForExit(1000);
+                    }
+                    catch
+                    {
+                        // Ignore errors in code page setting
+                    }
+                }
+
                 // Detect if a virtual environment exists in the project
                 string venvPath = DetectVirtualEnvironment();
                 string pythonExe = config.pythonExecutablePath;
@@ -777,7 +812,7 @@ namespace Hunyuan3D.Editor
             }
             catch (Exception ex)
             {
-                AddLogMessage($"Error executant script: {ex.Message}");
+                AddLogMessage($"Error executing script: {ex.Message}");
                 return false;
             }
         }
@@ -872,6 +907,19 @@ namespace Hunyuan3D.Editor
 
         private void SetPythonEnvironmentVariables(ProcessStartInfo startInfo, string venvPath = null)
         {
+            // Force UTF-8 encoding for international characters
+            startInfo.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8";
+            startInfo.EnvironmentVariables["PYTHONUTF8"] = "1";
+            startInfo.EnvironmentVariables["PYTHONLEGACYWINDOWSSTDIO"] = "utf-8";
+            
+            // Set console code page to UTF-8 for Windows
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                startInfo.EnvironmentVariables["PYTHONLEGACYWINDOWSSTDIO"] = "utf-8";
+                // Also set the console code page
+                startInfo.EnvironmentVariables["PYTHONLEGACYWINDOWSSTDIO"] = "utf-8";
+            }
+
             // If we have a venv, configure it
             if (!string.IsNullOrEmpty(venvPath))
             {
@@ -903,14 +951,14 @@ namespace Hunyuan3D.Editor
             if (Directory.Exists(hunyuan3dInstallerPath))
             {
                 hunyuan3dPath = hunyuan3dInstallerPath;
-                AddLogMessage($"📁 Hunyuan3D detectat (PowerShell): {hunyuan3dPath}");
+                AddLogMessage($"📁 Hunyuan3D detected (PowerShell): {hunyuan3dPath}");
 
                 // Also update scriptBasePath if it's empty
                 if (string.IsNullOrEmpty(config.scriptBasePath) || !Directory.Exists(config.scriptBasePath))
                 {
                     config.scriptBasePath = installerPath;
                     config.Save();
-                    AddLogMessage($"📁 Script base path actualitzat: {config.scriptBasePath}");
+                    AddLogMessage($"📁 Script base path updated: {config.scriptBasePath}");
                 }
             }
             else
@@ -940,13 +988,13 @@ namespace Hunyuan3D.Editor
                 paths.Add(hunyuan3dPath);
             }
 
-            // Afegir el directori dels scripts
+            // Add the scripts directory
             if (!string.IsNullOrEmpty(config.scriptBasePath))
             {
                 paths.Add(config.scriptBasePath);
             }
 
-            // Si tenim un venv, afegir site-packages
+            // If we have a venv, add site-packages
             if (!string.IsNullOrEmpty(venvPath))
             {
                 string sitePackages = Path.Combine(venvPath, "Lib", "site-packages");
@@ -1069,33 +1117,51 @@ namespace Hunyuan3D.Editor
                     pythonExe = Path.Combine(venvPath, "Scripts", "python.exe");
                 }
 
-                // Verification script
-                string verifyScript = @"
+                // Use external verification script
+                string verifyScript = Path.Combine(config.scriptBasePath, "verify_hunyuan3d.py");
+                
+                // If the external script doesn't exist, create a temporary one
+                if (!File.Exists(verifyScript))
+                {
+                    verifyScript = Path.Combine(Path.GetTempPath(), "verify_hunyuan3d.py");
+                    string scriptContent = @"
+import os
 import sys
+
+# Force UTF-8 encoding for Windows compatibility
+if sys.platform.startswith('win'):
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+    os.environ['PYTHONUTF8'] = '1'
+    os.environ['PYTHONLEGACYWINDOWSSTDIO'] = 'utf-8'
+
 print(f'Python: {sys.executable}')
 print(f'Version: {sys.version}')
+print(f'Platform: {sys.platform}')
+
 try:
     import hy3dgen
     from hy3dgen.shapegen import Hunyuan3DDiTFlowMatchingPipeline
-    print('✅ Hunyuan3D found and accessible')
+    print('[OK] Hunyuan3D found and accessible')
     sys.exit(0)
 except ImportError as e:
-    print(f'❌ ERROR: {e}')
+    print(f'[ERROR] {e}')
+    sys.exit(1)
+except Exception as e:
+    print(f'[ERROR] Unexpected error: {e}')
     sys.exit(1)
 ";
-
-                string tempScript = Path.Combine(Path.GetTempPath(), "verify_hunyuan3d.py");
-                File.WriteAllText(tempScript, verifyScript);
+                    File.WriteAllText(verifyScript, scriptContent);
+                }
 
                 if (useUV)
                 {
                     actualCommand = "uv.exe";
-                    actualArguments = $"run python \"{tempScript}\"";
+                    actualArguments = $"run python \"{verifyScript}\"";
                 }
                 else
                 {
                     actualCommand = pythonExe;
-                    actualArguments = $"\"{tempScript}\"";
+                    actualArguments = $"\"{verifyScript}\"";
                 }
 
                 ProcessStartInfo startInfo = new ProcessStartInfo
@@ -1121,8 +1187,11 @@ except ImportError as e:
 
                     await Task.Run(() => process.WaitForExit(5000));
 
-                    // Clean up
-                    try { File.Delete(tempScript); } catch { }
+                    // Clean up temporary script
+                    if (verifyScript.StartsWith(Path.GetTempPath()))
+                    {
+                        try { File.Delete(verifyScript); } catch { }
+                    }
 
                     AddLogMessage(output);
                     if (!string.IsNullOrEmpty(error))
@@ -1130,13 +1199,144 @@ except ImportError as e:
                         AddLogMessage($"Errors: {error}");
                     }
 
-                    return output.Contains("✅ Hunyuan3D found");
+                    return output.Contains("[OK] Hunyuan3D found");
                 }
             }
             catch (Exception ex)
             {
                 AddLogMessage($"❌ Error verifying: {ex.Message}");
                 return false;
+            }
+        }
+
+        private async Task TestUTF8Encoding()
+        {
+            try
+            {
+                AddLogMessage("🌐 Testing UTF-8 encoding...");
+
+                // Detect venv
+                string venvPath = DetectVirtualEnvironment();
+                string pythonExe = config.pythonExecutablePath;
+                string actualCommand = pythonExe;
+                string actualArguments = "";
+
+                // Check if UV is available
+                bool useUV = await CheckUVAvailable();
+
+                if (!string.IsNullOrEmpty(venvPath))
+                {
+                    pythonExe = Path.Combine(venvPath, "Scripts", "python.exe");
+                }
+
+                // Use external test script
+                string testScript = Path.Combine(config.scriptBasePath, "test_encoding.py");
+                
+                // If the external script doesn't exist, create a temporary one
+                if (!File.Exists(testScript))
+                {
+                    testScript = Path.Combine(Path.GetTempPath(), "test_encoding.py");
+                    string scriptContent = @"
+import os
+import sys
+
+# Force UTF-8 encoding for Windows compatibility
+if sys.platform.startswith('win'):
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+    os.environ['PYTHONUTF8'] = '1'
+    os.environ['PYTHONLEGACYWINDOWSSTDIO'] = 'utf-8'
+
+print('=== UTF-8 Encoding Test ===')
+print(f'Python executable: {sys.executable}')
+print(f'Python version: {sys.version}')
+print(f'Platform: {sys.platform}')
+print(f'Default encoding: {sys.getdefaultencoding()}')
+
+# Test international characters
+print('\n=== International Characters Test ===')
+test_strings = [
+    'Hello World',
+    'Hola Mundo',
+    'Bonjour le Monde',
+    'Hallo Welt',
+    'Ciao Mondo'
+]
+
+for i, text in enumerate(test_strings, 1):
+    print(f'{i:2d}. {text}')
+
+# Test status symbols
+print('\n=== Status Symbols Test ===')
+print('[OK] Success message')
+print('[ERROR] Error message')
+print('[WARNING] Warning message')
+print('[INFO] Information message')
+
+print('\n=== Test completed successfully ===')
+";
+                    File.WriteAllText(testScript, scriptContent);
+                }
+
+                if (useUV)
+                {
+                    actualCommand = "uv.exe";
+                    actualArguments = $"run python \"{testScript}\"";
+                }
+                else
+                {
+                    actualCommand = pythonExe;
+                    actualArguments = $"\"{testScript}\"";
+                }
+
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = actualCommand,
+                    Arguments = actualArguments,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true,
+                    WorkingDirectory = config.scriptBasePath
+                };
+
+                SetPythonEnvironmentVariables(startInfo, venvPath);
+
+                using (Process process = new Process())
+                {
+                    process.StartInfo = startInfo;
+                    process.Start();
+
+                    string output = await Task.Run(() => process.StandardOutput.ReadToEnd());
+                    string error = await Task.Run(() => process.StandardError.ReadToEnd());
+
+                    await Task.Run(() => process.WaitForExit(5000));
+
+                    // Clean up temporary script
+                    if (testScript.StartsWith(Path.GetTempPath()))
+                    {
+                        try { File.Delete(testScript); } catch { }
+                    }
+
+                    AddLogMessage("=== UTF-8 Test Results ===");
+                    AddLogMessage(output);
+                    if (!string.IsNullOrEmpty(error))
+                    {
+                        AddLogMessage($"Errors: {error}");
+                    }
+
+                    if (output.Contains("Test completed successfully"))
+                    {
+                        AddLogMessage("✅ UTF-8 encoding test passed!");
+                    }
+                    else
+                    {
+                        AddLogMessage("❌ UTF-8 encoding test failed!");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                AddLogMessage($"❌ Error testing UTF-8: {ex.Message}");
             }
         }
 

@@ -62,8 +62,8 @@ def setup_imports():
             'HAS_T2I': HAS_T2I
         }
     except ImportError as e:
-        print(f"Error important mòduls de Hunyuan3D: {e}")
-        print("Assegura't que estàs executant l'script des del directori del repositori Hunyuan3D-2")
+        print(f"Error importing Hunyuan3D modules: {e}")
+        print("Make sure you are running the script from the Hunyuan3D-2 repository directory")
         sys.exit(1)
 
 def is_image_file(file_path):
@@ -83,20 +83,20 @@ class HunyuanBatchProcessor:
         self.output_dir = args.output
         os.makedirs(self.output_dir, exist_ok=True)
         
-        print("Inicialitzant Hunyuan3D Batch Processor...")
+        print("Initializing Hunyuan3D Batch Processor...")
         print(f"Model: {args.model_path}/{args.subfolder}")
-        print(f"Dispositiu: {args.device}")
-        print(f"Format de sortida: {args.file_type.upper()}")
+        print(f"Device: {args.device}")
+        print(f"Output format: {args.file_type.upper()}")
         
-        # Verificar suport FBX si és necessari
+        # Verify FBX support if necessary
         if args.file_type.lower() == 'fbx':
             if not self._check_fbx_dependencies():
-                print("Warning: Dependències FBX no disponibles. Es farà conversió via formats intermedis.")
+                print("Warning: FBX dependencies not available. Conversion will be done via intermediate formats.")
         
-        # Importar mòduls
+        # Import modules
         self.modules = setup_imports()
         
-        # Inicialitzar workers exactament com gradio_app.py
+        # Initialize workers exactly like gradio_app.py
         self._init_workers()
         
         print("Models carregats correctament!\n")
@@ -141,11 +141,11 @@ class HunyuanBatchProcessor:
         """Inicialitza tots els workers seguint gradio_app.py"""
         
         # Background remover
-        print("Carregant Background Remover...")
+        print("Loading Background Remover...")
         self.rmbg_worker = self.modules['BackgroundRemover']()
         
         # Shape generation pipeline
-        print(f"Carregant pipeline de generació 3D...")
+        print(f"Loading 3D generation pipeline...")
         self.i23d_worker = self.modules['Hunyuan3DDiTFlowMatchingPipeline'].from_pretrained(
             self.args.model_path,
             subfolder=self.args.subfolder,
@@ -159,7 +159,7 @@ class HunyuanBatchProcessor:
             self.i23d_worker.enable_flashvdm(mc_algo=mc_algo)
         
         if self.args.compile:
-            print("Compilant model...")
+            print("Compiling model...")
             self.i23d_worker.compile()
         
         # Post-processing workers
@@ -169,7 +169,7 @@ class HunyuanBatchProcessor:
         
         # Texture generation (opcional)
         if not self.args.disable_tex and self.modules['HAS_TEXTUREGEN']:
-            print("Carregant pipeline de texturització...")
+            print("Loading texture pipeline...")
             self.texgen_worker = self.modules['Hunyuan3DPaintPipeline'].from_pretrained(
                 self.args.texgen_model_path
             )
@@ -180,7 +180,7 @@ class HunyuanBatchProcessor:
         
         # Text-to-image (opcional)
         if self.args.enable_t23d and self.modules['HAS_T2I']:
-            print("Carregant pipeline text-to-image...")
+            print("Loading text-to-image pipeline...")
             self.t2i_worker = self.modules['HunyuanDiTPipeline'](
                 'Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled', 
                 device=self.args.device
@@ -314,7 +314,7 @@ class HunyuanBatchProcessor:
             return True
             
         except Exception as e:
-            print(f"        ✗ Error amb bpy: {e}")
+            print(f"        ✗ Error with bpy: {e}")
             return False
     
     def _export_to_fbx_pymeshlab(self, input_path, output_path):
@@ -340,7 +340,7 @@ class HunyuanBatchProcessor:
                 ms.apply_filter('meshing_remove_connected_component_by_face_number', mincomponentsize=10)
                 
             except Exception as filter_error:
-                print(f"        ⚠ Alguns filtres han fallat: {filter_error}")
+                print(f"        ⚠ Some filters failed: {filter_error}")
             
             # Intentar exportar a FBX
             # Nota: PyMeshLab pot no tenir suport directe per FBX en totes les versions
@@ -355,7 +355,7 @@ class HunyuanBatchProcessor:
                 return False
             
         except Exception as e:
-            print(f"        ✗ Error amb PyMeshLab: {e}")
+            print(f"        ✗ Error with PyMeshLab: {e}")
             return False
     
     def _export_to_fbx_open3d(self, input_path, output_path):
@@ -406,7 +406,7 @@ class HunyuanBatchProcessor:
                 return False
             
         except Exception as e:
-            print(f"        ✗ Error amb Open3D: {e}")
+            print(f"        ✗ Error with Open3D: {e}")
             return False
     
     def _convert_to_fbx(self, input_path, output_path):
@@ -432,9 +432,9 @@ class HunyuanBatchProcessor:
                 else:
                     print(f"        ✗ Fallida amb {method_name}")
             except Exception as e:
-                print(f"        ✗ Error amb {method_name}: {e}")
+                print(f"        ✗ Error with {method_name}: {e}")
         
-        print(f"        ✗ No s'ha pogut convertir a FBX")
+        print(f"        ✗ Could not convert to FBX")
         return False
     
     def export_mesh(self, mesh, save_folder, textured=False, file_type='glb'):
@@ -481,7 +481,7 @@ class HunyuanBatchProcessor:
         Generació de forma 3D seguint exactament la lògica de gradio_app.py
         """
         if image is None and caption is None:
-            raise ValueError("Cal proporcionar una imatge o un caption")
+            raise ValueError("An image or caption must be provided")
         
         # Configurar paràmetres per defecte
         steps = kwargs.get('steps', 30)
@@ -511,7 +511,7 @@ class HunyuanBatchProcessor:
         # Text to image si és necessari
         if image is None and caption is not None:
             if self.t2i_worker is None:
-                raise ValueError("Text-to-image no està disponible")
+                raise ValueError("Text-to-image is not available")
             start_time = time.time()
             image = self.t2i_worker(caption)
             time_meta['text2image'] = time.time() - start_time
@@ -570,7 +570,7 @@ class HunyuanBatchProcessor:
             start_time_total = time.time()
             
             # Carregar imatge
-            print("  1. Carregant imatge...")
+            print("  1. Loading image...")
             image = Image.open(image_path).convert('RGBA')
             
             # Redimensionar si és necessari (Hunyuan3D espera 512x512)
@@ -633,11 +633,11 @@ class HunyuanBatchProcessor:
             if self.args.low_vram_mode:
                 torch.cuda.empty_cache()
             
-            print(f"  ✓ Completat en {stats['time']['total']:.2f}s")
+            print(f"  ✓ Completed in {stats['time']['total']:.2f}s")
             return True, save_folder, stats
             
         except Exception as e:
-            print(f"  ✗ Error processant {image_name}: {str(e)}")
+            print(f"  ✗ Error processing {image_name}: {str(e)}")
             return False, None, None
     
     def _generate_preview(self, mesh, save_folder, name):
@@ -821,25 +821,25 @@ Exemples d'ús:
     input_path = Path(args.input)
     
     if not input_path.exists():
-        print(f"Error: '{args.input}' no existeix.")
+        print(f"Error: '{args.input}' does not exist.")
         sys.exit(1)
     
     is_single_image = input_path.is_file() and is_image_file(input_path)
     is_folder = input_path.is_dir()
     
     if not is_single_image and not is_folder:
-        print(f"Error: '{args.input}' no és una imatge vàlida ni una carpeta.")
+        print(f"Error: '{args.input}' is not a valid image or folder.")
         print("Formats suportats: .jpg, .jpeg, .png, .bmp, .webp, .tiff")
         sys.exit(1)
     
     # Verificacions de sistema
     if 'cuda' in args.device and not torch.cuda.is_available():
-        print("Error: CUDA no està disponible. Utilitza --device cpu")
+        print("Error: CUDA is not available. Use --device cpu")
         sys.exit(1)
     
     # Verificació FBX
     if args.file_type.lower() == 'fbx':
-        print("Note: Format FBX seleccionat. Verificant dependències...")
+        print("Note: FBX format selected. Checking dependencies...")
         try:
             import bpy
             print("  ✓ Blender Python API (bpy) disponible")
@@ -898,7 +898,7 @@ Exemples d'ús:
             for file in sorted(generated_files):
                 print(f"   - {file.name}")
         else:
-            print(f"\n❌ Error processant la imatge: {args.input}")
+            print(f"\n❌ Error processing the image: {args.input}")
             sys.exit(1)
     else:
         # Processar carpeta

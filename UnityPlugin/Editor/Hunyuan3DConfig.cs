@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Hunyuan3D.Editor
 {
     /// <summary>
-    /// Configuració i utilitats per al plugin Hunyuan3D
+    /// Configuration and utilities for the Hunyuan3D plugin
     /// </summary>
     [Serializable]
     public class Hunyuan3DConfig
@@ -38,7 +38,7 @@ namespace Hunyuan3D.Editor
         public bool removeBackground = true;
         
         /// <summary>
-        /// Carrega la configuració des del directori persistent
+        /// Loads configuration from persistent directory
         /// </summary>
         public static Hunyuan3DConfig Load()
         {
@@ -53,7 +53,7 @@ namespace Hunyuan3D.Editor
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"Error carregant configuració Hunyuan3D: {ex.Message}");
+                    Debug.LogWarning($"Error loading Hunyuan3D configuration: {ex.Message}");
                 }
             }
             
@@ -61,7 +61,7 @@ namespace Hunyuan3D.Editor
         }
         
         /// <summary>
-        /// Guarda la configuració al directori persistent
+        /// Saves configuration to persistent directory
         /// </summary>
         public void Save()
         {
@@ -80,12 +80,12 @@ namespace Hunyuan3D.Editor
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Error guardant configuració Hunyuan3D: {ex.Message}");
+                Debug.LogError($"Error saving Hunyuan3D configuration: {ex.Message}");
             }
         }
         
         /// <summary>
-        /// Obté el path del fitxer de configuració
+        /// Gets the configuration file path
         /// </summary>
         private static string GetConfigPath()
         {
@@ -98,56 +98,56 @@ namespace Hunyuan3D.Editor
         }
         
         /// <summary>
-        /// Valida la configuració actual
+        /// Validates the current configuration
         /// </summary>
         public bool IsValid(out string errorMessage)
         {
             errorMessage = "";
             
-            // Validar path de Python
+            // Validate Python path
             if (string.IsNullOrEmpty(pythonExecutablePath))
             {
-                errorMessage = "Python executable path no pot estar buit.";
+                errorMessage = "Python executable path cannot be empty.";
                 return false;
             }
             
-            // Validar path dels scripts
+            // Validate scripts path
             if (string.IsNullOrEmpty(scriptBasePath) || !Directory.Exists(scriptBasePath))
             {
-                errorMessage = "Script base path no és vàlid.";
+                errorMessage = "Script base path is not valid.";
                 return false;
             }
             
-            // Verificar existència dels scripts
+            // Verify scripts existence
             string batchScript = Path.Combine(scriptBasePath, "batch_hunyuan3d.py");
             if (!File.Exists(batchScript))
             {
-                errorMessage = "batch_hunyuan3d.py no trobat en el script base path.";
+                errorMessage = "batch_hunyuan3d.py not found in script base path.";
                 return false;
             }
             
-            // Validar paràmetres numèrics
+            // Validate numeric parameters
             if (steps <= 0)
             {
-                errorMessage = "Steps ha de ser major que 0.";
+                errorMessage = "Steps must be greater than 0.";
                 return false;
             }
             
             if (guidanceScale <= 0)
             {
-                errorMessage = "Guidance Scale ha de ser major que 0.";
+                errorMessage = "Guidance Scale must be greater than 0.";
                 return false;
             }
             
             if (octreeResolution <= 0)
             {
-                errorMessage = "Octree Resolution ha de ser major que 0.";
+                errorMessage = "Octree Resolution must be greater than 0.";
                 return false;
             }
             
             if (numChunks <= 0)
             {
-                errorMessage = "Num Chunks ha de ser major que 0.";
+                errorMessage = "Num Chunks must be greater than 0.";
                 return false;
             }
             
@@ -156,12 +156,12 @@ namespace Hunyuan3D.Editor
     }
     
     /// <summary>
-    /// Utilitats diverses per al plugin
+    /// Various utilities for the plugin
     /// </summary>
     public static class Hunyuan3DUtils
     {
         /// <summary>
-        /// Extensions d'imatge suportades
+        /// Supported image extensions
         /// </summary>
         public static readonly string[] SupportedImageExtensions = 
         {
@@ -169,7 +169,7 @@ namespace Hunyuan3D.Editor
         };
         
         /// <summary>
-        /// Extensions de model 3D suportades
+        /// Supported 3D model extensions
         /// </summary>
         public static readonly string[] SupportedModelExtensions = 
         {
@@ -177,7 +177,7 @@ namespace Hunyuan3D.Editor
         };
         
         /// <summary>
-        /// Comprova si un fitxer és una imatge suportada
+        /// Checks if a file is a supported image
         /// </summary>
         public static bool IsImageFile(string filePath)
         {
@@ -189,7 +189,7 @@ namespace Hunyuan3D.Editor
         }
         
         /// <summary>
-        /// Comprova si un fitxer és un model 3D suportat
+        /// Checks if a file is a supported 3D model
         /// </summary>
         public static bool IsModelFile(string filePath)
         {

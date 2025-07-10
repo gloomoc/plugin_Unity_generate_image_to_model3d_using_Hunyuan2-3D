@@ -2,7 +2,7 @@
   "name": "com.hunyuan3d.unity-plugin",
   "version": "1.0.0",
   "displayName": "Hunyuan3D Unity Plugin",
-  "description": "Plugin d'Unity per generar models 3D a partir d'imatges utilitzant Hunyuan3D-2 AI",
+  "description": "Unity plugin to generate 3D models from images using Hunyuan3D-2 AI",
   "unity": "2020.3",
   "keywords": [
     "3d",
@@ -21,7 +21,7 @@
   "samples": [
     {
       "displayName": "Basic Usage Examples",
-      "description": "Exemples bàsics d'ús del plugin",
+      "description": "Basic usage examples for the plugin",
       "path": "Samples~/BasicExamples"
     }
   ]

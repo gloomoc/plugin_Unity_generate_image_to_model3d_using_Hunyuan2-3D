@@ -4,6 +4,21 @@
 import os
 import sys
 import argparse
+
+# Force UTF-8 encoding for Windows compatibility
+if sys.platform.startswith('win'):
+    # Set environment variables for UTF-8
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+    os.environ['PYTHONUTF8'] = '1'
+    os.environ['PYTHONLEGACYWINDOWSSTDIO'] = 'utf-8'
+    
+    # Try to configure stdout/stderr for UTF-8 (Python 3.7+)
+    try:
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8')
+            sys.stderr.reconfigure(encoding='utf-8')
+    except:
+        pass
 import time
 import uuid
 import shutil

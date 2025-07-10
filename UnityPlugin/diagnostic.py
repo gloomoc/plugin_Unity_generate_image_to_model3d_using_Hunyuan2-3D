@@ -31,16 +31,16 @@ def check_import(module_name, package_name=None):
         return False, str(e)
 
 def check_system_info():
-    """Comprova informació del sistema"""
-    print("=== INFORMACIÓ DEL SISTEMA ===")
+    """Checks system information"""
+    print("=== SYSTEM INFORMATION ===")
     print(f"Python: {sys.version}")
     print(f"Platform: {sys.platform}")
     print(f"Executable: {sys.executable}")
     print()
 
 def check_nvidia_drivers():
-    """Comprova drivers NVIDIA"""
-    print("=== DRIVERS NVIDIA ===")
+    """Checks NVIDIA drivers"""
+    print("=== NVIDIA DRIVERS ===")
     
     stdout, stderr, code = run_command("nvidia-smi")
     if code == 0 and "CUDA Version" in stdout:
@@ -50,11 +50,11 @@ def check_nvidia_drivers():
                 print(f"✓ {line.strip()}")
                 break
     else:
-        print("✗ nvidia-smi no disponible o drivers no instal·lats")
+        print("✗ nvidia-smi not available or drivers not installed")
     print()
 
 def check_cuda_toolkit():
-    """Comprova CUDA Toolkit"""
+    """Checks CUDA Toolkit"""
     print("=== CUDA TOOLKIT ===")
     
     stdout, stderr, code = run_command("nvcc --version")
@@ -65,9 +65,9 @@ def check_cuda_toolkit():
                 print(f"✓ nvcc {line.strip()}")
                 break
     else:
-        print("✗ nvcc no disponible - CUDA Toolkit no instal·lat o no al PATH")
+        print("✗ nvcc not available - CUDA Toolkit not installed or not in PATH")
     
-    # Comprovar rutes típiques a Windows
+    # Check typical paths on Windows
     if sys.platform == "win32":
         cuda_paths = [
             r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA",
@@ -77,11 +77,11 @@ def check_cuda_toolkit():
             if os.path.exists(base_path):
                 versions = [d for d in os.listdir(base_path) if d.startswith('v')]
                 if versions:
-                    print(f"ℹ CUDA instal·lacions trobades: {', '.join(sorted(versions))}")
+                    print(f"ℹ CUDA installations found: {', '.join(sorted(versions))}")
     print()
 
 def check_pytorch():
-    """Comprova PyTorch i CUDA"""
+    """Checks PyTorch and CUDA"""
     print("=== PYTORCH ===")
     
     torch_available, torch_info = check_import('torch')
@@ -109,24 +109,24 @@ def check_pytorch():
                 except Exception as e:
                     print(f"✗ Error en test GPU: {e}")
             else:
-                print("ℹ CUDA no disponible - mode CPU")
+                print("ℹ CUDA not available - CPU mode")
                 # Test CPU
                 try:
                     x = torch.randn(2, 3)
                     y = x * 2
-                    print("✓ Test CPU funcional OK")
+                    print("✓ CPU test functional OK")
                 except Exception as e:
-                    print(f"✗ Error en test CPU: {e}")
+                    print(f"✗ Error in CPU test: {e}")
                     
         except Exception as e:
-            print(f"✗ Error important PyTorch: {e}")
+            print(f"✗ Error importing PyTorch: {e}")
     else:
-        print(f"✗ PyTorch no instal·lat: {torch_info}")
+        print(f"✗ PyTorch not installed: {torch_info}")
     print()
 
 def check_core_dependencies():
-    """Comprova dependències core"""
-    print("=== DEPENDÈNCIES CORE ===")
+    """Checks core dependencies"""
+    print("=== CORE DEPENDENCIES ===")
     
     core_deps = [
         ('diffusers', 'diffusers'),
@@ -148,8 +148,8 @@ def check_core_dependencies():
     print()
 
 def check_optional_dependencies():
-    """Comprova dependències opcionals"""
-    print("=== DEPENDÈNCIES OPCIONALS ===")
+    """Checks optional dependencies"""
+    print("=== OPTIONAL DEPENDENCIES ===")
     
     optional_deps = [
         ('pymeshlab', 'pymeshlab'),
@@ -166,10 +166,10 @@ def check_optional_dependencies():
     print()
 
 def check_hunyuan3d():
-    """Comprova si Hunyuan3D està disponible"""
+    """Checks if Hunyuan3D is available"""
     print("=== HUNYUAN3D ===")
     
-    # Comprovar si podem importar components de Hunyuan3D
+    # Check if we can import Hunyuan3D components
     hunyuan_modules = [
         'hunyuan3d',
         'Hunyuan3D',
@@ -183,14 +183,14 @@ def check_hunyuan3d():
             found = True
         
     if not found:
-        print("ℹ Paquet Hunyuan3D no detectat (pot estar instal·lat de forma diferent)")
+        print("ℹ Hunyuan3D package not detected (may be installed differently)")
     print()
 
 def generate_report():
-    """Genera un informe complet"""
+    """Generates a complete report"""
     print("="*60)
-    print("INFORME DE DIAGNÒSTIC HUNYUAN3D")
-    print(f"Generat: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("HUNYUAN3D DIAGNOSTIC REPORT")
+    print(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*60)
     print()
     
@@ -203,28 +203,28 @@ def generate_report():
     check_hunyuan3d()
     
     print("="*60)
-    print("FI DE L'INFORME")
+    print("END OF REPORT")
     print("="*60)
     
-    # Recomanacions
-    print("\n=== RECOMANACIONS ===")
+    # Recommendations
+    print("\n=== RECOMMENDATIONS ===")
     
     torch_available, _ = check_import('torch')
     if not torch_available:
-        print("- Instal·la PyTorch: pip install torch torchvision")
+        print("- Install PyTorch: pip install torch torchvision")
     
     stdout, _, code = run_command("nvidia-smi")
     nvcc_out, _, nvcc_code = run_command("nvcc --version")
     
     if code == 0 and nvcc_code != 0:
-        print("- Driver NVIDIA detectat però CUDA Toolkit no instal·lat")
-        print("  Usa el Dependency Manager per instal·lar CUDA automàticament")
+        print("- NVIDIA driver detected but CUDA Toolkit not installed")
+        print("  Use the Dependency Manager to install CUDA automatically")
     
     if torch_available:
         import torch
         if not torch.cuda.is_available() and code == 0:
-            print("- CUDA disponible al sistema però no a PyTorch")
-            print("  Reinstal·la PyTorch amb suport CUDA")
+            print("- CUDA available on system but not in PyTorch")
+            print("  Reinstall PyTorch with CUDA support")
 
 if __name__ == "__main__":
     generate_report()
