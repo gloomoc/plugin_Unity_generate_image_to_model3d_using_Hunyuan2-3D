@@ -103,9 +103,7 @@ Installed automatically by the **Dependency Manager**. Listed here for reference
 3. Open **`Tools > Hunyuan3D > 3D Model Generator`**.
 4. Pick an image (or enable **Text‑to‑3D** and type a prompt), choose the output format, and click **Generate**.
 
-The full, authoritative end‑to‑end install/usage guide (Catalan) is in
-[`MANUAL_INSTALACIO_V003.md`](MANUAL_INSTALACIO_V003.md). In‑depth plugin docs are in
-[`UnityPlugin/README.md`](UnityPlugin/README.md).
+In‑depth plugin docs are in [`UnityPlugin/README.md`](UnityPlugin/README.md).
 
 ---
 
