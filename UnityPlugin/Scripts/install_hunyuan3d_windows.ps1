@@ -1,5 +1,5 @@
-# Hunyuan3D-2 Installation Script for Windows
-# Based on https://github.com/sdbds/Hunyuan3D-2-for-windows
+# Hunyuan3D-2.1 Installation Script for Windows
+# Based on the official repository: https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1
 # UTF-8 encoding configuration included
 
 param(
@@ -85,11 +85,11 @@ if ($ExecutionPolicy -eq "Restricted") {
     Write-Host "Execution policy configured" -ForegroundColor Green
 }
 
-# Clone Hunyuan3D-2 repository if it doesn't exist
-$repoPath = $InstallPath + "\Hunyuan3D-2-for-windows"
+# Clone Hunyuan3D-2.1 repository if it doesn't exist
+$repoPath = $InstallPath + "\Hunyuan3D-2.1"
 if (-not (Test-Path $repoPath)) {
-    Write-Info "Cloning Hunyuan3D-2 for windows repository..."
-    git clone --depth 1 https://github.com/sdbds/Hunyuan3D-2-for-windows.git $repoPath
+    Write-Info "Cloning official Hunyuan3D-2.1 repository..."
+    git clone --depth 1 https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1.git $repoPath
     Check "Error cloning repository"
     Write-Success "Repository cloned"
 } else {
@@ -113,7 +113,7 @@ $Env:CUDA_HOME = "${env:CUDA_PATH}"
 # Banner
 Write-Info @"
 ===================================================
-           Hunyuan3D-2 for Windows - Installer
+          Hunyuan3D-2.1 for Windows - Installer
                   Unity Integration
 ===================================================
 "@
@@ -266,75 +266,27 @@ $requirementsContent | Out-File -FilePath "requirements-uv.txt" -Encoding UTF8
 Write-Success "Requirements created"
 
 # Install main dependencies
+# NOTE: use 'pip install -r', NOT 'pip sync'. 'pip sync' makes the environment match the file
+# exactly and would UNINSTALL the torch/torchvision/torchaudio installed above (they are not listed
+# here on purpose, since they come from the CUDA wheel index).
 Write-Info "Installing main dependencies..."
-& $uvPath pip sync requirements-uv.txt --index-strategy unsafe-best-match
+& $uvPath pip install -r requirements-uv.txt --index-strategy unsafe-best-match
 Check "Error installing dependencies"
 Write-Success "Dependencies installed"
 
-# Install Triton only if CUDA is available
-Write-Info "Checking compilation support..."
-try {
-    # Check if CUDA is available
-    $cudaAvailable = $false
-    if ($UseCUDA12 -or !$UseCUDA12) {
-        # Try to detect CUDA
-        if ($env:CUDA_PATH -or $env:CUDA_HOME) {
-            $cudaAvailable = $true
-            Write-Info "CUDA detected, installing Triton..."
-            
-            try {
-                if ($UseCUDA12) {
-                    & $uvPath pip install triton-windows --index-url https://download.pytorch.org/whl/cu124
-                } else {
-                    & $uvPath pip install triton-windows --index-url https://download.pytorch.org/whl/cu118
-                }
-                Write-Success "Triton installed (--compile support)"
-            }
-            catch {
-                Write-Error "Could not install Triton"
-                Write-Info "    --compile parameter will not be available"
-            }
-        }
-    }
-    
-    if (-not $cudaAvailable) {
-        Write-Info "CUDA not detected, skipping Triton installation"
-        Write-Info "    --compile parameter will not be available"
-    }
-}
-catch {
-    Write-Error "Error checking CUDA: $_"
-}
+# Triton (for --compile) is already pinned in requirements-uv.txt (triton-windows) and installed
+# above, so it is not installed again here. The previous attempt used the PyTorch wheel index,
+# which does not host triton-windows, so it always failed.
 
-# Install optional FBX dependencies
-Write-Info "Installing optional FBX dependencies..."
+# Optional FBX dependencies: pymeshlab and bpy are already in requirements-uv.txt (installed above),
+# so only Open3D is added here, since it is not part of that file.
+Write-Info "Installing optional FBX dependency (Open3D)..."
 try {
-    # PyMeshLab is the most stable for FBX
-    & $uvPath pip install pymeshlab --quiet
-    Write-Success "  PyMeshLab installed"
-}
-catch {
-    Write-Error "  PyMeshLab not available"
-}
-
-try {
-    # Open3D as alternative
     & $uvPath pip install open3d --quiet
     Write-Success "  Open3D installed"
 }
 catch {
     Write-Error "  Open3D not available"
-}
-
-# bpy (Blender) - only if user wants it explicitly
-Write-Info "Installing Blender Python API (this may take 5-10 minutes)..."
-try {
-    & $uvPath pip install bpy --quiet
-    Write-Success "  Blender Python API installed"
-}
-catch {
-    Write-Error "  Could not install bpy"
-    Write-Info "    This will not affect main functionality"
 }
 
 # Try to compile optional C++ modules
@@ -345,15 +297,14 @@ Write-Info "  Installing compilation dependencies..."
 & $uvPath pip install pybind11 ninja setuptools wheel --quiet
 Check "Error installing compilation dependencies"
 
-$custRasterPath = "$repoPath\hy3dgen\texgen\custom_rasterizer"
-$diffRendererPath = "$repoPath\hy3dgen\texgen\differentiable_renderer"
+$custRasterPath = "$repoPath\hy3dpaint\custom_rasterizer"
+$diffRendererPath = "$repoPath\hy3dpaint\DifferentiableRenderer"
 
 if (Test-Path $custRasterPath) {
     Write-Info "  Compiling custom_rasterizer..."
     Push-Location $custRasterPath
     try {
-        # Use uv pip to run setup.py within virtual environment
-        & $uvPath pip install torch torchvision torchaudio
+        # torch/torchvision are already installed above; just build the extension
         & $uvPath pip install . --force-reinstall --quiet
         Write-Success "  custom_rasterizer compiled"
     }
@@ -379,17 +330,17 @@ if (Test-Path $diffRendererPath) {
     Pop-Location
 }
 
-# Install Hunyuan3D-2 in development mode
-Write-Info "Installing Hunyuan3D-2..."
+# Install Hunyuan3D-2.1 in development mode
+Write-Info "Installing Hunyuan3D-2.1..."
 Push-Location $repoPath
 & $uvPath pip install -e . --quiet
 $installSuccess = $?
 Pop-Location
 
 if ($installSuccess) {
-    Write-Success "Hunyuan3D-2 installed successfully"
+    Write-Success "Hunyuan3D-2.1 installed successfully"
 } else {
-    Write-Error "Possible error installing Hunyuan3D-2"
+    Write-Error "Possible error installing Hunyuan3D-2.1"
 }
 
 # Final verification
@@ -409,10 +360,14 @@ except ImportError:
     print('PyTorch not installed')
 
 try:
-    import hy3dgen
+    from hy3dshape.pipelines import Hunyuan3DDiTFlowMatchingPipeline
     print('Hunyuan3D imported successfully')
 except ImportError:
-    print('Hunyuan3D cannot be imported')
+    try:
+        import hy3dgen
+        print('Hunyuan3D imported successfully')
+    except ImportError:
+        print('Hunyuan3D cannot be imported')
 
 # Check Triton for compilation
 try:
@@ -470,7 +425,7 @@ $startScript = @"
 cd /d "%~dp0"
 call .venv\Scripts\activate
 echo.
-echo Hunyuan3D-2 Environment Activated
+echo Hunyuan3D-2.1 Environment Activated
 echo.
 echo Available options:
 echo   - python batch_hunyuan3d.py [image] --file_type obj
@@ -495,10 +450,14 @@ echo Testing installation...
 call .venv\Scripts\activate
 python -c "
 try:
-    import hy3dgen
-    print('Hunyuan3D working')
+    from hy3dshape.pipelines import Hunyuan3DDiTFlowMatchingPipeline
+    print('Hunyuan3D 2.1 working')
 except Exception as e:
-    print(f'Error: {e}')
+    try:
+        import hy3dgen
+        print('Hunyuan3D legacy API working')
+    except Exception as legacy_error:
+        print(f'Error: {legacy_error}')
 
 try:
     import triton
@@ -518,4 +477,4 @@ pause
 $testScript | Out-File -FilePath "test_install.bat" -Encoding ASCII
 
 Write-Output "Press any key to exit..."
-Read-Host | Out-Null 
+Read-Host | Out-Null

@@ -15,9 +15,9 @@ namespace Hunyuan3D.Editor
         public string scriptBasePath = "";
         
         [Header("Model Settings")]
-        public string modelPath = "tencent/Hunyuan3D-2mini";
-        public string subfolder = "hunyuan3d-dit-v2-mini-turbo";
-        public string texgenModelPath = "tencent/Hunyuan3D-2";
+        public string modelPath = "tencent/Hunyuan3D-2.1";
+        public string subfolder = "hunyuan3d-dit-v2-1";
+        public string texgenModelPath = "tencent/Hunyuan3D-2.1";
         public string device = "cuda";
         public string mcAlgo = "mc";
         
@@ -36,7 +36,10 @@ namespace Hunyuan3D.Editor
         public bool compile = false;
         public bool lowVramMode = false;
         public bool removeBackground = true;
-        
+
+        [Header("Text-to-3D")]
+        public string textPrompt = "";
+
         /// <summary>
         /// Loads configuration from persistent directory
         /// </summary>

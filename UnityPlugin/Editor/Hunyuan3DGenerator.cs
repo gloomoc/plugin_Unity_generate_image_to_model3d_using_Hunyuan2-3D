@@ -28,34 +28,30 @@ namespace Hunyuan3D.Editor
         private string statusMessage = "";
         private float progress = 0f;
         private List<string> logMessages = new List<string>();
+        private string detectedPythonVersion = "";
         
         // Scroll for logs
         private Vector2 scrollPosition = Vector2.zero;
+        private Vector2 windowScrollPosition = Vector2.zero;
         
         // File type options
         private readonly string[] fileTypeOptions = { "obj", "fbx", "glb", "ply", "stl" };
         private readonly string[] deviceOptions = { "cuda", "cpu", "mps" };
         
-        // Model Path options
+        // Model Path options — Hunyuan3D-2.1 ships a single Image-to-Shape model
+        // (see the repo README: tencent/Hunyuan3D-2.1 / hunyuan3d-dit-v2-1).
         private readonly string[] modelPathOptions = {
-            "tencent/Hunyuan3D-2mini",
-            "tencent/Hunyuan3D-2mv", 
-            "tencent/Hunyuan3D-2"
+            "tencent/Hunyuan3D-2.1"
         };
 
-        // Subfolder options
+        // Subfolder options — the 2.1 shape DiT lives in hunyuan3d-dit-v2-1
         private readonly string[] subfolderOptions = {
-            "hunyuan3d-dit-v2-mini",
-            "hunyuan3d-dit-v2-mv",
-            "hunyuan3d-dit-v2-0",
-            "hunyuan3d-dit-v2-mini-turbo",
-            "hunyuan3d-dit-v2-mv-turbo",
-            "hunyuan3d-dit-v2-0-turbo"
+            "hunyuan3d-dit-v2-1"
         };
 
-        // Texture Model Path options
+        // Texture Model Path options — 2.1 paint model (hunyuan3d-paintpbr-v2-1) is loaded from this repo
         private readonly string[] textureModelPathOptions = {
-            "tencent/Hunyuan3D-2"
+            "tencent/Hunyuan3D-2.1"
         };
         #endregion
 
@@ -82,36 +78,14 @@ namespace Hunyuan3D.Editor
             // Load persistent configuration
             config = Hunyuan3DConfig.Load();
             
-            // Try to automatically detect script path if not configured
-            if (string.IsNullOrEmpty(config.scriptBasePath))
-            {
-                string currentPath = Application.dataPath;
-                string projectRoot = Directory.GetParent(currentPath).FullName;
-                
-                // Search for scripts in parent directory or related directories
-                string[] possiblePaths = {
-                    Path.Combine(projectRoot, "batch_hunyuan3d.py"),
-                    Path.Combine(projectRoot, "Scripts", "batch_hunyuan3d.py"),
-                    Path.Combine(projectRoot, "Python", "batch_hunyuan3d.py"),
-                    Path.Combine(Directory.GetParent(projectRoot).FullName, "batch_hunyuan3d.py")
-                };
-                
-                foreach (string path in possiblePaths)
-                {
-                    if (File.Exists(path))
-                    {
-                        config.scriptBasePath = Path.GetDirectoryName(path);
-                        AddLogMessage($"Scripts found at: {config.scriptBasePath}");
-                        config.Save(); // Save updated configuration
-                        break;
-                    }
-                }
-            }
-            
+            // Automatically detect the installed environment (managed UV venv Python + the plugin's
+            // Scripts folder) without overwriting a valid manual configuration.
+            DetectInstalledEnvironment(force: false, logResults: true);
+
             if (string.IsNullOrEmpty(config.scriptBasePath))
             {
                 AddLogMessage("Warning: Python scripts not found automatically.");
-                AddLogMessage("Please specify the path manually in configuration.");
+                AddLogMessage("Please specify the Script Base Path manually with the '...' button.");
             }
             
             // Create output folder if it doesn't exist
@@ -126,87 +100,45 @@ namespace Hunyuan3D.Editor
         #region GUI
         private void OnGUI()
         {
+            // Wrap the whole window in a scroll view so nothing is cut off when the window is short.
+            windowScrollPosition = EditorGUILayout.BeginScrollView(windowScrollPosition);
+
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Hunyuan3D Model Generator", EditorStyles.boldLabel);
             EditorGUILayout.Space(5);
-            
+
             DrawPathConfiguration();
             EditorGUILayout.Space(10);
-            
+
             DrawInputSelection();
             EditorGUILayout.Space(10);
-            
+
             DrawModelParameters();
             EditorGUILayout.Space(10);
-            
+
             DrawGenerationParameters();
             EditorGUILayout.Space(10);
-            
+
             DrawOptions();
             EditorGUILayout.Space(10);
-            
+
             DrawProcessingControls();
             EditorGUILayout.Space(10);
-            
+
             DrawProgressAndLogs();
+
+            EditorGUILayout.EndScrollView();
         }
 
         private void DrawPathConfiguration()
         {
             EditorGUILayout.LabelField("Path Configuration", EditorStyles.boldLabel);
 
-            EditorGUILayout.BeginHorizontal();
-            
-            // Button to detect PowerShell installation
-            if (GUILayout.Button("🔍 Detect PowerShell Installation", GUILayout.Height(25)))
+            // Auto-detect the installed environment (managed UV venv Python + scripts) and its version.
+            if (GUILayout.Button("🔍 Detect Installed Environment", GUILayout.Height(25)))
             {
-                string powerShellPath = @"C:\Users\" + Environment.UserName + @"\AppData\Local\Temp\Hunyuan2-3D-for-windows";
-                if (Directory.Exists(powerShellPath))
-                {
-                    string venvPath = Path.Combine(powerShellPath, ".venv");
-                    if (Directory.Exists(venvPath))
-                    {
-                        string venvPython = Path.Combine(venvPath, "Scripts", "python.exe");
-                        if (File.Exists(venvPython))
-                        {
-                            config.pythonExecutablePath = venvPython;
-                            config.scriptBasePath = powerShellPath;
-                            config.Save();
-
-                            AddLogMessage($"✅ PowerShell installation detected!");
-                            AddLogMessage($"📁 Path: {powerShellPath}");
-                            AddLogMessage($"🐍 Python: {venvPython}");
-
-                            EditorUtility.DisplayDialog(
-                                "Installation Detected",
-                                $"PowerShell installation has been detected!\n\n" +
-                                $"Path: {powerShellPath}\n" +
-                                $"Python: {venvPython}\n\n" +
-                                "The configuration has been updated automatically.",
-                                "Great!"
-                            );
-                        }
-                    }
-                }
-                else
-                {
-                    EditorUtility.DisplayDialog(
-                        "Installation Not Found",
-                        "PowerShell installation was not found.\n\n" +
-                        "Make sure you have run the PowerShell installation script\n" +
-                        "from the Dependency Manager.",
-                        "OK"
-                    );
-                }
+                DetectInstalledEnvironment(force: true, logResults: true);
             }
-            
-            // Button to test UTF-8 encoding
-            if (GUILayout.Button("🌐 Test UTF-8 Encoding", GUILayout.Height(25)))
-            {
-                _ = TestUTF8Encoding();
-            }
-            
-            EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
             config.pythonExecutablePath = EditorGUILayout.TextField("Python Executable:", config.pythonExecutablePath);
@@ -216,13 +148,18 @@ namespace Hunyuan3D.Editor
                 if (!string.IsNullOrEmpty(path))
                 {
                     config.pythonExecutablePath = path;
+                    detectedPythonVersion = GetPythonVersion(path);
                     config.Save();
                 }
             }
             EditorGUILayout.EndHorizontal();
-            
-            // Show if we are using a venv
-            if (config.pythonExecutablePath.Contains(".venv"))
+
+            // Show the detected Python version and whether we are using a virtual environment
+            if (!string.IsNullOrEmpty(detectedPythonVersion))
+            {
+                EditorGUILayout.LabelField("Detected Version:", detectedPythonVersion);
+            }
+            if (!string.IsNullOrEmpty(config.pythonExecutablePath) && config.pythonExecutablePath.Contains(".venv"))
             {
                 EditorGUILayout.HelpBox("✅ Using Python from virtual environment", MessageType.Info);
             }
@@ -258,6 +195,77 @@ namespace Hunyuan3D.Editor
                 config.Save();
                 AddLogMessage("✓ Configuration saved.");
             }
+        }
+
+        private IEnumerable<string> GetPowerShellInstallRoots()
+        {
+            string localTemp = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Temp"
+            );
+
+            return new[]
+            {
+                Path.Combine(localTemp, "Hunyuan3D-2.1-for-windows"),
+                Path.Combine(localTemp, "Hunyuan3D-2.1"),
+                Path.Combine(localTemp, "Hunyuan3D-2-for-windows"),
+                Path.Combine(localTemp, "Hunyuan2-3D-for-windows")
+            }.Distinct(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private string FindPowerShellInstallRoot()
+        {
+            return GetPowerShellInstallRoots().FirstOrDefault(Directory.Exists);
+        }
+
+        private bool LooksLikeHunyuanRepository(string path)
+        {
+            if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
+            {
+                return false;
+            }
+
+            return Directory.Exists(Path.Combine(path, "hy3dshape")) ||
+                   Directory.Exists(Path.Combine(path, "hy3dpaint")) ||
+                   Directory.Exists(Path.Combine(path, "hy3dgen"));
+        }
+
+        private string FindHunyuanRepositoryRoot()
+        {
+            var candidates = new List<string>();
+
+            string powerShellRoot = FindPowerShellInstallRoot();
+            if (!string.IsNullOrEmpty(powerShellRoot))
+            {
+                candidates.Add(powerShellRoot);
+                candidates.Add(Path.Combine(powerShellRoot, "Hunyuan3D-2.1"));
+                candidates.Add(Path.Combine(powerShellRoot, "Hunyuan3D-2"));
+            }
+
+            if (!string.IsNullOrEmpty(config?.scriptBasePath))
+            {
+                candidates.Add(config.scriptBasePath);
+                candidates.Add(Path.Combine(config.scriptBasePath, "Hunyuan3D-2.1"));
+                candidates.Add(Path.Combine(config.scriptBasePath, "Hunyuan3D-2"));
+
+                string scriptParent = Directory.GetParent(config.scriptBasePath)?.FullName;
+                if (!string.IsNullOrEmpty(scriptParent))
+                {
+                    candidates.Add(scriptParent);
+                }
+            }
+
+            string projectRoot = Directory.GetParent(Application.dataPath)?.FullName;
+            if (!string.IsNullOrEmpty(projectRoot))
+            {
+                candidates.Add(projectRoot);
+                candidates.Add(Path.Combine(projectRoot, "UnityPlugin", "Scripts"));
+            }
+
+            return candidates
+                .Where(path => !string.IsNullOrEmpty(path))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(LooksLikeHunyuanRepository);
         }
 
         private void DrawInputSelection()
@@ -308,13 +316,13 @@ namespace Hunyuan3D.Editor
             
             // Model Path dropdown
             int modelPathIndex = System.Array.IndexOf(modelPathOptions, config.modelPath);
-            if (modelPathIndex == -1) modelPathIndex = 2; // Default to Hunyuan3D-2
+            if (modelPathIndex == -1) modelPathIndex = 0; // Default to Hunyuan3D-2.1
             modelPathIndex = EditorGUILayout.Popup("Model Path:", modelPathIndex, modelPathOptions);
             config.modelPath = modelPathOptions[modelPathIndex];
             
             // Subfolder dropdown
             int subfolderIndex = System.Array.IndexOf(subfolderOptions, config.subfolder);
-            if (subfolderIndex == -1) subfolderIndex = 2; // Default to hunyuan3d-dit-v2-0
+            if (subfolderIndex == -1) subfolderIndex = 0; // Default to hunyuan3d-dit-v2-1
             subfolderIndex = EditorGUILayout.Popup("Subfolder:", subfolderIndex, subfolderOptions);
             config.subfolder = subfolderOptions[subfolderIndex];
             
@@ -329,7 +337,12 @@ namespace Hunyuan3D.Editor
             deviceIndex = EditorGUILayout.Popup("Device:", deviceIndex, deviceOptions);
             config.device = deviceOptions[deviceIndex];
             
-            config.mcAlgo = EditorGUILayout.TextField("MC Algorithm:", config.mcAlgo);
+            // MC Algorithm is only consumed when FlashVDM is enabled (it is passed to enable_flashvdm);
+            // hide it otherwise so it does not look like an active control.
+            if (config.enableFlashVDM)
+            {
+                config.mcAlgo = EditorGUILayout.TextField("MC Algorithm (FlashVDM):", config.mcAlgo);
+            }
             
             // Show selected configuration for reference
             EditorGUILayout.Space(5);
@@ -366,15 +379,34 @@ namespace Hunyuan3D.Editor
             config.disableTexture = EditorGUILayout.Toggle("Disable Texture", config.disableTexture);
             EditorGUILayout.EndHorizontal();
             
+            // torch.compile depends on Triton, which is not usable on Windows, so only expose it elsewhere.
+            bool isWindows = Application.platform == RuntimePlatform.WindowsEditor;
             EditorGUILayout.BeginHorizontal();
             config.enableFlashVDM = EditorGUILayout.Toggle("Enable FlashVDM", config.enableFlashVDM);
-            config.compile = EditorGUILayout.Toggle("Compile Model", config.compile);
+            if (!isWindows)
+            {
+                config.compile = EditorGUILayout.Toggle("Compile Model", config.compile);
+            }
+            else
+            {
+                config.compile = false;
+            }
             EditorGUILayout.EndHorizontal();
-            
+
             EditorGUILayout.BeginHorizontal();
             config.lowVramMode = EditorGUILayout.Toggle("Low VRAM Mode", config.lowVramMode);
             config.removeBackground = EditorGUILayout.Toggle("Remove Background", config.removeBackground);
             EditorGUILayout.EndHorizontal();
+
+            // Text-to-3D prompt: HunyuanDiT generates an image from this text, then image -> 3D runs.
+            if (config.enableT23D)
+            {
+                EditorGUILayout.Space(3);
+                config.textPrompt = EditorGUILayout.TextField("Text Prompt:", config.textPrompt);
+                EditorGUILayout.HelpBox(
+                    "Text-to-3D ignores the image input above and downloads the HunyuanDiT model " +
+                    "(~8 GB) on first use.", MessageType.Info);
+            }
         }
 
         private void DrawProcessingControls()
@@ -483,24 +515,36 @@ namespace Hunyuan3D.Editor
         #region Validació
         private bool ValidateInputs()
         {
-            if (string.IsNullOrEmpty(selectedImagePath))
+            // Text-to-3D mode: no image/folder is needed, but a prompt is required.
+            if (config.enableT23D)
             {
-                AddLogMessage("Error: Please select an image or folder.");
-                return false;
+                if (string.IsNullOrEmpty(config.textPrompt))
+                {
+                    AddLogMessage("Error: Enable Text-to-3D is on — please enter a Text Prompt.");
+                    return false;
+                }
             }
-            
-            if (batchMode && !Directory.Exists(selectedImagePath))
+            else
             {
-                AddLogMessage("Error: The specified folder does not exist.");
-                return false;
+                if (string.IsNullOrEmpty(selectedImagePath))
+                {
+                    AddLogMessage("Error: Please select an image or folder.");
+                    return false;
+                }
+
+                if (batchMode && !Directory.Exists(selectedImagePath))
+                {
+                    AddLogMessage("Error: The specified folder does not exist.");
+                    return false;
+                }
+
+                if (!batchMode && !File.Exists(selectedImagePath))
+                {
+                    AddLogMessage("Error: The specified image does not exist.");
+                    return false;
+                }
             }
-            
-            if (!batchMode && !File.Exists(selectedImagePath))
-            {
-                AddLogMessage("Error: The specified image does not exist.");
-                return false;
-            }
-            
+
             // Use the configuration validation
             string errorMessage;
             if (!config.IsValid(out errorMessage))
@@ -545,25 +589,11 @@ namespace Hunyuan3D.Editor
                     Directory.CreateDirectory(absoluteOutputPath);
                 }
 
-                // Preprocess with remove_background if necessary
-                string processedImagePath = selectedImagePath;
-                if (config.removeBackground && !batchMode)
-                {
-                    progress = 0.1f;
-                    statusMessage = "Removing image background...";
-                    processedImagePath = await PreprocessImage(selectedImagePath);
-                    if (string.IsNullOrEmpty(processedImagePath))
-                    {
-                        AddLogMessage("Error: Could not remove image background.");
-                        return;
-                    }
-                }
-
                 // Execute batch_hunyuan3d.py
                 progress = 0.3f;
                 statusMessage = "Generating 3D model...";
 
-                bool success = await ExecuteHunyuan3DScript(processedImagePath, absoluteOutputPath);
+                bool success = await ExecuteHunyuan3DScript(selectedImagePath, absoluteOutputPath);
 
                 if (success)
                 {
@@ -629,31 +659,42 @@ namespace Hunyuan3D.Editor
         {
             string batchScript = Path.Combine(config.scriptBasePath, "batch_hunyuan3d.py");
             
+            bool textMode = config.enableT23D && !string.IsNullOrEmpty(config.textPrompt);
+
             // Build arguments following the script structure
             List<string> args = new List<string>
             {
-                $"\"{batchScript}\"",
-                $"\"{inputPath}\"",
-                $"--output \"{outputPath}\"",
-                $"--model_path \"{config.modelPath}\"",
-                $"--subfolder \"{config.subfolder}\"",
-                $"--texgen_model_path \"{config.texgenModelPath}\"",
-                $"--device {config.device}",
-                $"--mc_algo {config.mcAlgo}",
-                $"--steps {config.steps}",
-                $"--guidance_scale {config.guidanceScale}",
-                $"--seed {config.seed}",
-                $"--octree_resolution {config.octreeResolution}",
-                $"--num_chunks {config.numChunks}",
-                $"--file_type {config.fileType}"
+                $"\"{batchScript}\""
             };
-            
+
+            // Positional input: image/folder for image-to-3D, omitted for text-to-3D
+            if (!textMode)
+            {
+                args.Add($"\"{inputPath}\"");
+            }
+
+            args.Add($"--output \"{outputPath}\"");
+            args.Add($"--model_path \"{config.modelPath}\"");
+            args.Add($"--subfolder \"{config.subfolder}\"");
+            args.Add($"--texgen_model_path \"{config.texgenModelPath}\"");
+            args.Add($"--device {config.device}");
+            args.Add($"--mc_algo {config.mcAlgo}");
+            args.Add($"--steps {config.steps}");
+            args.Add($"--guidance_scale {config.guidanceScale.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+            args.Add($"--seed {config.seed}");
+            args.Add($"--octree_resolution {config.octreeResolution}");
+            args.Add($"--num_chunks {config.numChunks}");
+            args.Add($"--file_type {config.fileType}");
+
             // Add optional flags
             if (config.enableT23D) args.Add("--enable_t23d");
+            if (textMode) args.Add($"--caption \"{config.textPrompt}\"");
             if (config.disableTexture) args.Add("--disable_tex");
             if (config.enableFlashVDM) args.Add("--enable_flashvdm");
             if (config.compile) args.Add("--compile");
             if (config.lowVramMode) args.Add("--low_vram_mode");
+            if (config.removeBackground) args.Add("--remove_background");
+            else args.Add("--skip_background_removal");
             
             string arguments = string.Join(" ", args);
             
@@ -707,25 +748,14 @@ namespace Hunyuan3D.Editor
                     if (File.Exists(venvPython))
                     {
                         pythonExe = venvPython;
-
-                        if (useUV)
-                        {
-                            // If we have UV, use it to run Python
-                            actualCommand = "uv.exe";
-                            actualArguments = $"run python {arguments}";
-                            AddLogMessage($"🚀 Using UV to run Python from venv");
-                        }
-                        else
-                        {
-                            actualCommand = venvPython;
-                            AddLogMessage($"🐍 Using Python from venv directly: {venvPython}");
-                        }
+                        actualCommand = venvPython;
+                        AddLogMessage($"🐍 Using Python from venv directly: {venvPython}");
                     }
                 }
                 else if (useUV)
                 {
                     // If there is no venv but we have UV, use it anyway
-                    actualCommand = "uv.exe";
+                    actualCommand = "uv";
                     actualArguments = $"run python {arguments}";
                     AddLogMessage($"🚀 Using UV to run Python");
                 }
@@ -819,11 +849,105 @@ namespace Hunyuan3D.Editor
 
         private async Task<bool> CheckUVAvailable()
         {
+            foreach (string uvCommand in new[] { "uv", "uv.exe" })
+            {
+                try
+                {
+                    ProcessStartInfo startInfo = new ProcessStartInfo
+                    {
+                        FileName = uvCommand,
+                        Arguments = "--version",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true
+                    };
+
+                    using (Process process = new Process())
+                    {
+                        process.StartInfo = startInfo;
+                        process.Start();
+
+                        string output = await Task.Run(() => process.StandardOutput.ReadToEnd());
+                        await Task.Run(() => process.WaitForExit(3000));
+
+                        bool isAvailable = process.ExitCode == 0 && output.Contains("uv");
+
+                        if (isAvailable)
+                        {
+                            AddLogMessage($"✅ UV available: {output.Trim()}");
+                            return true;
+                        }
+                    }
+                }
+                catch
+                {
+                    // Try the next executable name.
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Auto-detects the installed environment: the managed UV virtual environment's Python and the
+        /// plugin's Scripts folder, plus the Python version. With force=false it only fills values that are
+        /// empty or invalid (preserving a manual configuration); with force=true it always re-detects.
+        /// </summary>
+        private void DetectInstalledEnvironment(bool force, bool logResults)
+        {
+            // Script base path: the plugin's Scripts folder under Assets/
+            string assetsScripts = Path.Combine(Application.dataPath, "UnityPlugin", "Scripts");
+            bool scriptsValid = !string.IsNullOrEmpty(config.scriptBasePath) &&
+                                File.Exists(Path.Combine(config.scriptBasePath, "batch_hunyuan3d.py"));
+            if ((force || !scriptsValid) && File.Exists(Path.Combine(assetsScripts, "batch_hunyuan3d.py")))
+            {
+                config.scriptBasePath = assetsScripts;
+            }
+
+            // Python executable: prefer the managed virtual environment
+            bool pythonValid = !string.IsNullOrEmpty(config.pythonExecutablePath) &&
+                               config.pythonExecutablePath != "python" &&
+                               File.Exists(config.pythonExecutablePath);
+            if (force || !pythonValid)
+            {
+                string venvPath = DetectVirtualEnvironment();
+                if (!string.IsNullOrEmpty(venvPath))
+                {
+                    string venvPython = Path.Combine(venvPath, "Scripts", "python.exe");
+                    if (File.Exists(venvPython))
+                    {
+                        config.pythonExecutablePath = venvPython;
+                    }
+                }
+            }
+
+            detectedPythonVersion = GetPythonVersion(config.pythonExecutablePath);
+            config.Save();
+
+            if (logResults)
+            {
+                AddLogMessage($"🐍 Python: {config.pythonExecutablePath}" +
+                              (string.IsNullOrEmpty(detectedPythonVersion) ? "" : $" ({detectedPythonVersion})"));
+                AddLogMessage($"📁 Script Base Path: {(string.IsNullOrEmpty(config.scriptBasePath) ? "(not set)" : config.scriptBasePath)}");
+            }
+        }
+
+        /// <summary>
+        /// Returns the version string (e.g. "Python 3.10.20") of a Python executable, or "" if it fails.
+        /// </summary>
+        private string GetPythonVersion(string pythonExecutable)
+        {
+            if (string.IsNullOrEmpty(pythonExecutable))
+            {
+                return "";
+            }
+
             try
             {
-                ProcessStartInfo startInfo = new ProcessStartInfo
+                var startInfo = new ProcessStartInfo
                 {
-                    FileName = "uv.exe",
+                    FileName = pythonExecutable,
                     Arguments = "--version",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
@@ -831,27 +955,20 @@ namespace Hunyuan3D.Editor
                     CreateNoWindow = true
                 };
 
-                using (Process process = new Process())
+                using (var process = Process.Start(startInfo))
                 {
-                    process.StartInfo = startInfo;
-                    process.Start();
+                    string stdout = process.StandardOutput.ReadToEnd();
+                    string stderr = process.StandardError.ReadToEnd();
+                    process.WaitForExit(4000);
 
-                    string output = await Task.Run(() => process.StandardOutput.ReadToEnd());
-                    await Task.Run(() => process.WaitForExit(3000)); // 3 segons timeout
-
-                    bool isAvailable = process.ExitCode == 0 && output.Contains("uv");
-
-                    if (isAvailable)
-                    {
-                        AddLogMessage($"✅ UV available: {output.Trim()}");
-                    }
-
-                    return isAvailable;
+                    string combined = (stdout + " " + stderr).Trim();
+                    int index = combined.IndexOf("Python", StringComparison.OrdinalIgnoreCase);
+                    return index >= 0 ? combined.Substring(index).Trim() : "";
                 }
             }
             catch
             {
-                return false;
+                return "";
             }
         }
 
@@ -860,18 +977,38 @@ namespace Hunyuan3D.Editor
             try
             {
                 // Search for .venv in different possible locations
-                string[] possibleVenvPaths = {
-                    // PowerShell installer path
-                    @"C:\Users\" + Environment.UserName + @"\AppData\Local\Temp\Hunyuan2-3D-for-windows\.venv",
-                    // Path inside the Unity project
-                    Path.Combine(Application.dataPath, "UnityPlugin", "Scripts", ".venv"),
-                    Path.Combine(config.scriptBasePath, ".venv"),
-                    Path.Combine(Directory.GetParent(Application.dataPath).FullName, ".venv"),
-                    // Alternative path if moved
-                    Path.Combine(config.scriptBasePath, "..", ".venv")
-                };
+                var possibleVenvPaths = new List<string>();
 
-                foreach (string venvPath in possibleVenvPaths)
+                possibleVenvPaths.AddRange(
+                    GetPowerShellInstallRoots().Select(path => Path.Combine(path, ".venv"))
+                );
+
+                string repoRoot = FindHunyuanRepositoryRoot();
+                if (!string.IsNullOrEmpty(repoRoot))
+                {
+                    possibleVenvPaths.Add(Path.Combine(repoRoot, ".venv"));
+                }
+
+                possibleVenvPaths.Add(Path.Combine(Application.dataPath, "UnityPlugin", "Scripts", ".venv"));
+
+                // Managed UV project venv created by the Dependency Manager (<ProjectRoot>/Hunyuan3D_UV/.venv)
+                string uvProjectRoot = Directory.GetParent(Application.dataPath)?.FullName;
+                if (!string.IsNullOrEmpty(uvProjectRoot))
+                {
+                    possibleVenvPaths.Add(Path.Combine(uvProjectRoot, "Hunyuan3D_UV", ".venv"));
+                }
+
+                possibleVenvPaths.Add(Path.Combine(Directory.GetParent(Application.dataPath).FullName, ".venv"));
+
+                if (!string.IsNullOrEmpty(config.scriptBasePath))
+                {
+                    possibleVenvPaths.Add(Path.Combine(config.scriptBasePath, ".venv"));
+                    possibleVenvPaths.Add(Path.GetFullPath(Path.Combine(config.scriptBasePath, "..", ".venv")));
+                }
+
+                foreach (string venvPath in possibleVenvPaths
+                    .Where(path => !string.IsNullOrEmpty(path))
+                    .Distinct(StringComparer.OrdinalIgnoreCase))
                 {
                     if (Directory.Exists(venvPath))
                     {
@@ -941,42 +1078,10 @@ namespace Hunyuan3D.Editor
                 }
             }
 
-            // Determine the Hunyuan3D directory
-            string hunyuan3dPath = "";
-
-            // Specific path for the PowerShell installer
-            string installerPath = @"C:\Users\" + Environment.UserName + @"\AppData\Local\Temp\Hunyuan2-3D-for-windows";
-            string hunyuan3dInstallerPath = Path.Combine(installerPath, "Hunyuan3D-2");
-
-            if (Directory.Exists(hunyuan3dInstallerPath))
+            string hunyuan3dPath = FindHunyuanRepositoryRoot();
+            if (!string.IsNullOrEmpty(hunyuan3dPath))
             {
-                hunyuan3dPath = hunyuan3dInstallerPath;
-                AddLogMessage($"📁 Hunyuan3D detected (PowerShell): {hunyuan3dPath}");
-
-                // Also update scriptBasePath if it's empty
-                if (string.IsNullOrEmpty(config.scriptBasePath) || !Directory.Exists(config.scriptBasePath))
-                {
-                    config.scriptBasePath = installerPath;
-                    config.Save();
-                    AddLogMessage($"📁 Script base path updated: {config.scriptBasePath}");
-                }
-            }
-            else
-            {
-                // Buscar en altres ubicacions
-                string parentDir = Directory.GetParent(config.scriptBasePath)?.FullName;
-                if (parentDir != null && Directory.Exists(Path.Combine(parentDir, "hy3dgen")))
-                {
-                    hunyuan3dPath = parentDir;
-                }
-                else if (Directory.Exists(Path.Combine(config.scriptBasePath, "hy3dgen")))
-                {
-                    hunyuan3dPath = config.scriptBasePath;
-                }
-                else if (Directory.Exists(Path.Combine(config.scriptBasePath, "Hunyuan3D-2", "hy3dgen")))
-                {
-                    hunyuan3dPath = Path.Combine(config.scriptBasePath, "Hunyuan3D-2");
-                }
+                AddLogMessage($"📁 Hunyuan3D repository detected: {hunyuan3dPath}");
             }
 
             // Configurar PYTHONPATH
@@ -986,6 +1091,19 @@ namespace Hunyuan3D.Editor
             if (!string.IsNullOrEmpty(hunyuan3dPath))
             {
                 paths.Add(hunyuan3dPath);
+
+                string hy3dshapePath = Path.Combine(hunyuan3dPath, "hy3dshape");
+                string hy3dpaintPath = Path.Combine(hunyuan3dPath, "hy3dpaint");
+
+                if (Directory.Exists(hy3dshapePath))
+                {
+                    paths.Add(hy3dshapePath);
+                }
+
+                if (Directory.Exists(hy3dpaintPath))
+                {
+                    paths.Add(hy3dpaintPath);
+                }
             }
 
             // Add the scripts directory
@@ -1018,65 +1136,77 @@ namespace Hunyuan3D.Editor
             // Variables CUDA si cal
             if (config.device == "cuda")
             {
-                var depManager = new Hunyuan3DDependencyManager();
-                depManager.SetCudaEnvironmentVariables(startInfo);
+                Hunyuan3DDependencyManager.SetCudaEnvironmentVariables(startInfo);
             }
         }
 
         private void UpdateStatusFromOutput(string output)
         {
+            string normalizedOutput = output.ToLowerInvariant();
+
             // Update status message based on Python script output
-            if (output.Contains("Verificant dependències"))
+            if (normalizedOutput.Contains("verificant depend") ||
+                normalizedOutput.Contains("verifying fbx dependencies"))
             {
                 statusMessage = "Verifying FBX dependencies...";
                 progress = 0.35f;
             }
-            else if (output.Contains("Inicialitzant Hunyuan3D"))
+            else if (normalizedOutput.Contains("inicialitzant hunyuan3d") ||
+                     normalizedOutput.Contains("initializing hunyuan3d"))
             {
                 statusMessage = "Initializing Hunyuan3D...";
                 progress = 0.4f;
             }
-            else if (output.Contains("Carregant Background Remover"))
+            else if (normalizedOutput.Contains("carregant background remover") ||
+                     normalizedOutput.Contains("loading background remover"))
             {
                 statusMessage = "Loading Background Remover...";
                 progress = 0.45f;
             }
-            else if (output.Contains("Carregant pipeline de generació 3D"))
+            else if (normalizedOutput.Contains("carregant pipeline de generació 3d") ||
+                     normalizedOutput.Contains("loading 3d generation pipeline"))
             {
                 statusMessage = "Loading 3D model...";
                 progress = 0.5f;
             }
-            else if (output.Contains("Models carregats correctament"))
+            else if (normalizedOutput.Contains("models carregats correctament") ||
+                     normalizedOutput.Contains("pipelines loaded"))
             {
                 statusMessage = "Models loaded!";
                 progress = 0.55f;
             }
-            else if (output.Contains("Carregant imatge"))
+            else if (normalizedOutput.Contains("carregant imatge") ||
+                     normalizedOutput.Contains("loading image"))
             {
                 statusMessage = "Processing image...";
                 progress = 0.6f;
             }
-            else if (output.Contains("Generant forma 3D"))
+            else if (normalizedOutput.Contains("generant forma 3d") ||
+                     normalizedOutput.Contains("generating 3d shape"))
             {
                 statusMessage = "Generating 3D model...";
                 progress = 0.7f;
             }
-            else if (output.Contains("Post-processament"))
+            else if (normalizedOutput.Contains("post-processament") ||
+                     normalizedOutput.Contains("post-processing"))
             {
                 statusMessage = "Post-processing model...";
                 progress = 0.8f;
             }
-            else if (output.Contains("Generant textura"))
+            else if (normalizedOutput.Contains("generant textura") ||
+                     normalizedOutput.Contains("generating texture"))
             {
                 statusMessage = "Generating textures...";
                 progress = 0.85f;
             }
-            else if (output.Contains("Generant preview"))
+            else if (normalizedOutput.Contains("generant preview") ||
+                     normalizedOutput.Contains("generating preview"))
             {
                 statusMessage = "Generating previews...";
                 progress = 0.9f;
             }
-            else if (output.Contains("Completat en"))
+            else if (normalizedOutput.Contains("completat en") ||
+                     normalizedOutput.Contains("completed in"))
             {
                 statusMessage = "Completed!";
                 progress = 0.95f;
@@ -1087,7 +1217,7 @@ namespace Hunyuan3D.Editor
                 statusMessage = "Processing...";
                 if (progress < 0.9f) progress += 0.05f;
             }
-            else if (output.Contains("Error") || output.Contains("✗"))
+            else if (normalizedOutput.Contains("error") || output.Contains("✗"))
             {
                 // Errors
                 statusMessage = "Error detected!";
@@ -1139,13 +1269,18 @@ print(f'Version: {sys.version}')
 print(f'Platform: {sys.platform}')
 
 try:
-    import hy3dgen
-    from hy3dgen.shapegen import Hunyuan3DDiTFlowMatchingPipeline
-    print('[OK] Hunyuan3D found and accessible')
+    from hy3dshape.pipelines import Hunyuan3DDiTFlowMatchingPipeline
+    print('[OK] Hunyuan3D 2.1 found and accessible')
     sys.exit(0)
-except ImportError as e:
-    print(f'[ERROR] {e}')
-    sys.exit(1)
+except ImportError:
+    try:
+        import hy3dgen
+        from hy3dgen.shapegen import Hunyuan3DDiTFlowMatchingPipeline
+        print('[OK] Hunyuan3D found and accessible')
+        sys.exit(0)
+    except ImportError as e:
+        print(f'[ERROR] {e}')
+        sys.exit(1)
 except Exception as e:
     print(f'[ERROR] Unexpected error: {e}')
     sys.exit(1)
@@ -1153,9 +1288,9 @@ except Exception as e:
                     File.WriteAllText(verifyScript, scriptContent);
                 }
 
-                if (useUV)
+                if (string.IsNullOrEmpty(venvPath) && useUV)
                 {
-                    actualCommand = "uv.exe";
+                    actualCommand = "uv";
                     actualArguments = $"run python \"{verifyScript}\"";
                 }
                 else
@@ -1185,7 +1320,11 @@ except Exception as e:
                     string output = await Task.Run(() => process.StandardOutput.ReadToEnd());
                     string error = await Task.Run(() => process.StandardError.ReadToEnd());
 
-                    await Task.Run(() => process.WaitForExit(5000));
+                    bool exited = await Task.Run(() => process.WaitForExit(30000));
+                    if (!exited)
+                    {
+                        try { process.Kill(); } catch { }
+                    }
 
                     // Clean up temporary script
                     if (verifyScript.StartsWith(Path.GetTempPath()))
@@ -1199,7 +1338,9 @@ except Exception as e:
                         AddLogMessage($"Errors: {error}");
                     }
 
-                    return output.Contains("[OK] Hunyuan3D found");
+                    return exited &&
+                           process.ExitCode == 0 &&
+                           (output.Contains("[OK]") || output.Contains("Hunyuan3D found"));
                 }
             }
             catch (Exception ex)
@@ -1407,9 +1548,10 @@ print('\n=== Test completed successfully ===')
                 logMessages.RemoveAt(0);
             }
             
-            // Force repaint to update the UI
+            // Auto-scroll the log panel to the most recent line, then repaint
+            scrollPosition.y = float.MaxValue;
             Repaint();
-            
+
             // Also print to the Unity console
             UnityEngine.Debug.Log($"Hunyuan3D: {message}");
         }

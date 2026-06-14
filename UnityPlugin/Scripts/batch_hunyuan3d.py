@@ -35,38 +35,88 @@ import json
 # Add the project directory to the path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+
+def _add_repo_path(path):
+    if path and os.path.isdir(path) and path not in sys.path:
+        sys.path.insert(0, path)
+
+
+def _looks_like_v21_root(path):
+    return os.path.isdir(os.path.join(path, 'hy3dshape')) and os.path.isdir(os.path.join(path, 'hy3dpaint'))
+
+
+def _looks_like_legacy_root(path):
+    return os.path.isdir(os.path.join(path, 'hy3dgen'))
+
+
+def _find_hunyuan_root():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.environ.get('HUNYUAN3D_ROOT'),
+        script_dir,
+        os.path.dirname(script_dir),
+        os.path.dirname(os.path.dirname(script_dir)),
+        os.path.join(os.path.dirname(script_dir), 'Hunyuan3D-2.1'),
+        os.path.join(os.path.dirname(script_dir), 'Hunyuan3D-2'),
+        os.path.join(Path.home(), 'AppData', 'Local', 'Temp', 'Hunyuan3D-2.1-for-windows'),
+        os.path.join(Path.home(), 'AppData', 'Local', 'Temp', 'Hunyuan3D-2-for-windows'),
+        os.path.join(Path.home(), 'AppData', 'Local', 'Temp', 'Hunyuan2-3D-for-windows'),
+    ]
+
+    for candidate in candidates:
+        if not candidate:
+            continue
+
+        if _looks_like_v21_root(candidate) or _looks_like_legacy_root(candidate):
+            return candidate
+
+    return None
+
+
+HUNYUAN_ROOT = _find_hunyuan_root()
+if HUNYUAN_ROOT:
+    _add_repo_path(HUNYUAN_ROOT)
+    _add_repo_path(os.path.join(HUNYUAN_ROOT, 'hy3dshape'))
+    _add_repo_path(os.path.join(HUNYUAN_ROOT, 'hy3dpaint'))
+
 def setup_imports():
     """Imports the necessary modules from Hunyuan3D"""
+    import_errors = []
+
     try:
-        # Main imports from Hunyuan3D
-        from hy3dgen.shapegen import (
-            FaceReducer, 
-            FloaterRemover, 
-            DegenerateFaceRemover, 
-            Hunyuan3DDiTFlowMatchingPipeline
-        )
-        from hy3dgen.shapegen.pipelines import export_to_trimesh
-        from hy3dgen.rembg import BackgroundRemover
-        
-        # Optional imports for texturing
         try:
-            from hy3dgen.texgen import Hunyuan3DPaintPipeline
-            HAS_TEXTUREGEN = True
-        except Exception:
-            print("Warning: Texture generation not available. Install requirements per README.md")
-            HAS_TEXTUREGEN = False
+            from hy3dshape import FaceReducer, FloaterRemover, DegenerateFaceRemover
+        except ImportError:
+            from hy3dshape.postprocessors import FaceReducer, FloaterRemover, DegenerateFaceRemover
+
+        from hy3dshape.pipelines import Hunyuan3DDiTFlowMatchingPipeline, export_to_trimesh
+
+        try:
+            from hy3dshape.rembg import BackgroundRemover
+        except ImportError:
+            BackgroundRemover = None
+
+        try:
+            from textureGenPipeline import Hunyuan3DPaintPipeline, Hunyuan3DPaintConfig
+            has_texturegen = True
+        except Exception as texture_error:
+            print(f"Warning: Hunyuan3D 2.1 texture generation not available: {texture_error}")
             Hunyuan3DPaintPipeline = None
-        
-        # Optional imports for text-to-image
+            Hunyuan3DPaintConfig = None
+            has_texturegen = False
+
+        # Text-to-3D on 2.1: the legacy text2image module (hy3dgen.text2image) ships only with the 2.0
+        # package, so we drive text-to-image through diffusers' own HunyuanDiTPipeline (the same model).
         try:
-            from hy3dgen.text2image import HunyuanDiTPipeline
-            HAS_T2I = True
-        except Exception:
-            print("Warning: Text-to-image not available.")
-            HAS_T2I = False
-            HunyuanDiTPipeline = None
-            
+            from diffusers import HunyuanDiTPipeline as DiffusersHunyuanDiTPipeline
+            has_t2i = True
+        except Exception as t2i_error:
+            print(f"Warning: text-to-3D unavailable (diffusers HunyuanDiTPipeline missing): {t2i_error}")
+            DiffusersHunyuanDiTPipeline = None
+            has_t2i = False
+
         return {
+            'API_VERSION': '2.1',
             'FaceReducer': FaceReducer,
             'FloaterRemover': FloaterRemover,
             'DegenerateFaceRemover': DegenerateFaceRemover,
@@ -74,14 +124,70 @@ def setup_imports():
             'export_to_trimesh': export_to_trimesh,
             'BackgroundRemover': BackgroundRemover,
             'Hunyuan3DPaintPipeline': Hunyuan3DPaintPipeline,
-            'HunyuanDiTPipeline': HunyuanDiTPipeline,
-            'HAS_TEXTUREGEN': HAS_TEXTUREGEN,
-            'HAS_T2I': HAS_T2I
+            'Hunyuan3DPaintConfig': Hunyuan3DPaintConfig,
+            'HunyuanDiTPipeline': DiffusersHunyuanDiTPipeline,
+            'HAS_TEXTUREGEN': has_texturegen,
+            'HAS_T2I': has_t2i,
+            'T2I_BACKEND': 'diffusers'
         }
     except ImportError as e:
-        print(f"Error importing Hunyuan3D modules: {e}")
-        print("Make sure you are running the script from the Hunyuan3D-2 repository directory")
-        sys.exit(1)
+        import_errors.append(f"Hunyuan3D 2.1 imports failed: {e}")
+
+    try:
+        from hy3dgen.shapegen import (
+            FaceReducer,
+            FloaterRemover,
+            DegenerateFaceRemover,
+            Hunyuan3DDiTFlowMatchingPipeline
+        )
+        from hy3dgen.shapegen.pipelines import export_to_trimesh
+        from hy3dgen.rembg import BackgroundRemover
+
+        try:
+            from hy3dgen.texgen import Hunyuan3DPaintPipeline
+            has_texturegen = True
+        except Exception:
+            print("Warning: Legacy texture generation not available. Install requirements per README.md")
+            Hunyuan3DPaintPipeline = None
+            has_texturegen = False
+
+        try:
+            from hy3dgen.text2image import HunyuanDiTPipeline
+            has_t2i = True
+        except Exception:
+            print("Warning: Legacy text-to-image not available.")
+            HunyuanDiTPipeline = None
+            has_t2i = False
+
+        return {
+            'API_VERSION': '2.0',
+            'FaceReducer': FaceReducer,
+            'FloaterRemover': FloaterRemover,
+            'DegenerateFaceRemover': DegenerateFaceRemover,
+            'Hunyuan3DDiTFlowMatchingPipeline': Hunyuan3DDiTFlowMatchingPipeline,
+            'export_to_trimesh': export_to_trimesh,
+            'BackgroundRemover': BackgroundRemover,
+            'Hunyuan3DPaintPipeline': Hunyuan3DPaintPipeline,
+            'Hunyuan3DPaintConfig': None,
+            'HunyuanDiTPipeline': HunyuanDiTPipeline,
+            'HAS_TEXTUREGEN': has_texturegen,
+            'HAS_T2I': has_t2i,
+            'T2I_BACKEND': 'legacy'
+        }
+    except ImportError as e:
+        import_errors.append(f"Legacy Hunyuan3D imports failed: {e}")
+
+    print("Error importing Hunyuan3D modules.")
+    if HUNYUAN_ROOT:
+        print(f"Detected repository root: {HUNYUAN_ROOT}")
+    else:
+        print("No compatible Hunyuan3D repository was detected automatically.")
+
+    for error in import_errors:
+        print(f"  - {error}")
+
+    print("Expected either Hunyuan3D-2.1 (hy3dshape + hy3dpaint) or Hunyuan3D-2 (hy3dgen).")
+    sys.exit(1)
 
 def is_image_file(file_path):
     """Checks if a file is a supported image"""
@@ -190,26 +296,59 @@ class HunyuanBatchProcessor:
         """Initializes all workers following gradio_app.py"""
         
         # Background remover
-        print("Loading Background Remover...")
-        self.rmbg_worker = self.modules['BackgroundRemover']()
+        if self.modules['BackgroundRemover'] is None:
+            from rembg import remove
+            from io import BytesIO
+
+            def _fallback_rmbg(image):
+                buffer = BytesIO()
+                image.save(buffer, format='PNG')
+                result = remove(buffer.getvalue())
+                return Image.open(BytesIO(result)).convert('RGBA')
+
+            print("Loading Background Remover via rembg fallback...")
+            self.rmbg_worker = _fallback_rmbg
+        else:
+            print("Loading Background Remover...")
+            self.rmbg_worker = self.modules['BackgroundRemover']()
         
         # Shape generation pipeline
         print(f"Loading 3D generation pipeline...")
-        self.i23d_worker = self.modules['Hunyuan3DDiTFlowMatchingPipeline'].from_pretrained(
-            self.args.model_path,
-            subfolder=self.args.subfolder,
-            use_safetensors=True,
-            device=self.args.device,
-        )
+        shape_attempts = [
+            {'subfolder': self.args.subfolder, 'use_safetensors': True, 'device': self.args.device},
+            {'subfolder': self.args.subfolder, 'use_safetensors': True},
+            {'subfolder': self.args.subfolder},
+            {}
+        ]
+        last_shape_error = None
+        for attempt in shape_attempts:
+            try:
+                self.i23d_worker = self.modules['Hunyuan3DDiTFlowMatchingPipeline'].from_pretrained(
+                    self.args.model_path,
+                    **attempt,
+                )
+                last_shape_error = None
+                break
+            except Exception as shape_error:
+                last_shape_error = shape_error
+
+        if last_shape_error is not None:
+            raise last_shape_error
         
         # Activate optimizations if available
-        if self.args.enable_flashvdm:
+        if self.args.enable_flashvdm and hasattr(self.i23d_worker, 'enable_flashvdm'):
             mc_algo = 'mc' if self.args.device in ['cpu', 'mps'] else self.args.mc_algo
-            self.i23d_worker.enable_flashvdm(mc_algo=mc_algo)
+            try:
+                self.i23d_worker.enable_flashvdm(mc_algo=mc_algo)
+            except Exception as flash_error:
+                print(f"Warning: FlashVDM could not be enabled: {flash_error}")
         
-        if self.args.compile:
+        if self.args.compile and hasattr(self.i23d_worker, 'compile'):
             print("Compiling model...")
-            self.i23d_worker.compile()
+            try:
+                self.i23d_worker.compile()
+            except Exception as compile_error:
+                print(f"Warning: Model compilation not available: {compile_error}")
         
         # Post-processing workers
         self.floater_remove_worker = self.modules['FloaterRemover']()
@@ -219,21 +358,58 @@ class HunyuanBatchProcessor:
         # Texture generation (optional)
         if not self.args.disable_tex and self.modules['HAS_TEXTUREGEN']:
             print("Loading texturing pipeline...")
-            self.texgen_worker = self.modules['Hunyuan3DPaintPipeline'].from_pretrained(
-                self.args.texgen_model_path
-            )
-            if self.args.low_vram_mode:
+            if self.modules['API_VERSION'] == '2.1':
+                # 2.1 API: Hunyuan3DPaintPipeline(Hunyuan3DPaintConfig(max_num_view, resolution)).
+                # No model_path / positional / from_pretrained fallbacks here: those are 2.0-style and on 2.1
+                # they only raise misleading errors (e.g. "Hunyuan3DPaintConfig() missing 2 positional
+                # arguments") that mask the real failure. Report the real error + traceback instead.
+                self.texgen_worker = None
+                if self.modules.get('Hunyuan3DPaintConfig') is None:
+                    print("Warning: Hunyuan3DPaintConfig unavailable; texture generation disabled.")
+                else:
+                    try:
+                        paint_config = self.modules['Hunyuan3DPaintConfig'](max_num_view=6, resolution=512)
+                        # Wire the "Texture Model Path": the paint (multiview) model repo is taken from
+                        # --texgen_model_path so the dropdown actually selects the texture model on 2.1.
+                        if getattr(self.args, 'texgen_model_path', None):
+                            paint_config.multiview_pretrained_path = self.args.texgen_model_path
+                        self.texgen_worker = self.modules['Hunyuan3DPaintPipeline'](paint_config)
+                    except Exception as texture_error:
+                        import traceback
+                        print(f"Warning: Hunyuan3D 2.1 texture pipeline unavailable: {texture_error}")
+                        traceback.print_exc()
+                        self.texgen_worker = None
+            else:
+                self.texgen_worker = self.modules['Hunyuan3DPaintPipeline'].from_pretrained(
+                    self.args.texgen_model_path
+                )
+
+            if self.args.low_vram_mode and self.texgen_worker is not None and hasattr(self.texgen_worker, 'enable_model_cpu_offload'):
                 self.texgen_worker.enable_model_cpu_offload()
         else:
             self.texgen_worker = None
         
-        # Text-to-image (optional)
+        # Text-to-image (optional). On 2.1 the backend is diffusers (from_pretrained + .images[0]);
+        # on legacy 2.0 it is the hy3dgen wrapper (constructor + returns a PIL image directly).
+        self.t2i_is_diffusers = False
         if self.args.enable_t23d and self.modules['HAS_T2I']:
-            print("Loading text-to-image pipeline...")
-            self.t2i_worker = self.modules['HunyuanDiTPipeline'](
-                'Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled', 
-                device=self.args.device
-            )
+            print("Loading text-to-image pipeline (first run downloads the HunyuanDiT model, ~8 GB)...")
+            t2i_backend = self.modules.get('T2I_BACKEND', 'legacy')
+            if t2i_backend == 'diffusers':
+                t2i_dtype = torch.float16 if 'cuda' in self.args.device else torch.float32
+                self.t2i_worker = self.modules['HunyuanDiTPipeline'].from_pretrained(
+                    'Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled',
+                    torch_dtype=t2i_dtype
+                ).to(self.args.device)
+                self.t2i_is_diffusers = True
+            else:
+                self.t2i_worker = self.modules['HunyuanDiTPipeline'](
+                    'Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled',
+                    device=self.args.device
+                )
+        elif self.args.enable_t23d and not self.modules['HAS_T2I']:
+            print("Warning: --enable_t23d was set but text-to-image is unavailable; ignoring it.")
+            self.t2i_worker = None
         else:
             self.t2i_worker = None
     
@@ -508,11 +684,13 @@ class HunyuanBatchProcessor:
                     os.remove(temp_obj_path)
                 return final_path
             else:
-                # If conversion fails, keep the OBJ
+                # If conversion fails, keep the OBJ. Use os.replace (not os.rename) so it overwrites an
+                # existing file on Windows — export_mesh is called twice for FBX (initial + cleaned mesh),
+                # and os.rename raises WinError 183 when white_mesh.obj already exists.
                 final_path = temp_obj_path.replace('_temp.obj', '.obj')
                 if os.path.exists(temp_obj_path):
-                    os.rename(temp_obj_path, final_path)
-                print(f"        ⚠ FBX not available, saved as OBJ: {final_path}")
+                    os.replace(temp_obj_path, final_path)
+                print(f"        ⚠ FBX not available (needs Blender/bpy), saved as OBJ: {final_path}")
                 return final_path
         else:
             # Normal formats (OBJ, GLB, PLY, etc.)
@@ -541,6 +719,7 @@ class HunyuanBatchProcessor:
         num_chunks = kwargs.get('num_chunks', 200000)
         
         stats = {
+            'api_version': self.modules['API_VERSION'],
             'model': {
                 'shapegen': f'{self.args.model_path}/{self.args.subfolder}',
                 'texgen': f'{self.args.texgen_model_path}' if self.texgen_worker else 'Unavailable',
@@ -562,7 +741,11 @@ class HunyuanBatchProcessor:
             if self.t2i_worker is None:
                 raise ValueError("Text-to-image is not available")
             start_time = time.time()
-            image = self.t2i_worker(caption)
+            t2i_output = self.t2i_worker(caption)
+            # diffusers pipelines return an object exposing .images; the legacy wrapper returns a PIL image
+            image = t2i_output.images[0] if getattr(self, 't2i_is_diffusers', False) else t2i_output
+            if image.size != (512, 512):
+                image = image.resize((512, 512), Image.Resampling.LANCZOS)
             time_meta['text2image'] = time.time() - start_time
         
         # Save input image
@@ -655,14 +838,70 @@ class HunyuanBatchProcessor:
             print(f"    ✓ Cleaned mesh: {cleaned_mesh_path}")
             
             # Texturing if available
-            textured_mesh_path = None
             if self.texgen_worker is not None:
                 print("  4. Generating texture...")
                 tmp_time = time.time()
-                textured_mesh = self.texgen_worker(mesh, processed_image)
+
+                if self.modules['API_VERSION'] == '2.1':
+                    texture_image_path = os.path.join(save_folder, 'rembg.png')
+                    if not os.path.exists(texture_image_path):
+                        texture_image_path = os.path.join(save_folder, 'input.png')
+
+                    source_mesh_path = os.path.join(save_folder, 'white_mesh_for_texture.obj')
+                    mesh.export(source_mesh_path)
+
+                    requested_file_type = file_type.lower()
+                    textured_output_path = os.path.join(
+                        save_folder,
+                        'textured_mesh.glb' if requested_file_type == 'glb' else 'textured_mesh.obj'
+                    )
+
+                    texture_attempts = [
+                        {
+                            'mesh_path': source_mesh_path,
+                            'image_path': texture_image_path,
+                            'output_mesh_path': textured_output_path,
+                            'save_glb': requested_file_type == 'glb'
+                        },
+                        {
+                            'mesh_path': source_mesh_path,
+                            'image_path': texture_image_path,
+                            'output_mesh_path': textured_output_path
+                        },
+                        {
+                            'mesh_path': source_mesh_path,
+                            'image_path': texture_image_path
+                        }
+                    ]
+
+                    textured_result = None
+                    last_texture_error = None
+                    for attempt in texture_attempts:
+                        try:
+                            textured_result = self.texgen_worker(**attempt)
+                            last_texture_error = None
+                            break
+                        except TypeError as texture_error:
+                            last_texture_error = texture_error
+                        except Exception as texture_error:
+                            last_texture_error = texture_error
+
+                    if textured_result is None and not os.path.exists(textured_output_path):
+                        raise last_texture_error
+
+                    textured_mesh_path = textured_result if isinstance(textured_result, str) else textured_output_path
+                    if not os.path.exists(textured_mesh_path):
+                        textured_mesh_path = textured_output_path
+
+                    if requested_file_type == 'fbx' and os.path.exists(textured_mesh_path):
+                        converted_fbx_path = os.path.join(save_folder, 'textured_mesh.fbx')
+                        if self._convert_to_fbx(textured_mesh_path, converted_fbx_path):
+                            textured_mesh_path = converted_fbx_path
+                else:
+                    textured_mesh = self.texgen_worker(mesh, processed_image)
+                    textured_mesh_path = self.export_mesh(textured_mesh, save_folder, textured=True, file_type=file_type)
+
                 stats['time']['texture_generation'] = time.time() - tmp_time
-                
-                textured_mesh_path = self.export_mesh(textured_mesh, save_folder, textured=True, file_type=file_type)
                 print(f"    ✓ Textured mesh: {textured_mesh_path}")
             else:
                 print("    ⚠ Texturing not available")
@@ -679,7 +918,7 @@ class HunyuanBatchProcessor:
             self._generate_preview(mesh, save_folder, image_name)
             
             # Clean VRAM if activated
-            if self.args.low_vram_mode:
+            if self.args.low_vram_mode and torch.cuda.is_available():
                 torch.cuda.empty_cache()
             
             print(f"  ✓ Completed in {stats['time']['total']:.2f}s")
@@ -689,6 +928,53 @@ class HunyuanBatchProcessor:
             print(f"  ✗ Error processing {image_name}: {str(e)}")
             return False, None, None
     
+    def process_single_text(self, caption, file_type, **kwargs):
+        """
+        Text-to-3D: generate an image from the prompt with the text-to-image model, then run the
+        exact same image -> 3D -> texture pipeline used for image inputs (process_single_image).
+        """
+        if self.t2i_worker is None:
+            print("  ✗ Text-to-image is not available (need --enable_t23d and a working HunyuanDiT).")
+            return False, None, None
+
+        print(f"\nProcessing text prompt: {caption}")
+        print("  0. Generating image from text...")
+        try:
+            t2i_output = self.t2i_worker(caption)
+            # diffusers pipelines return an object exposing .images; the legacy wrapper returns a PIL image
+            image = t2i_output.images[0] if getattr(self, 't2i_is_diffusers', False) else t2i_output
+            if image.size != (512, 512):
+                image = image.resize((512, 512), Image.Resampling.LANCZOS)
+            os.makedirs(self.output_dir, exist_ok=True)
+            src_image_path = os.path.join(self.output_dir, f"{self._caption_to_name(caption)}.png")
+            image.convert("RGB").save(src_image_path)
+            # Free the text-to-image model before shape/texture generation to reduce VRAM pressure
+            self.t2i_worker = None
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except Exception as e:
+            print(f"  ✗ Error generating image from text: {str(e)}")
+            return False, None, None
+
+        try:
+            return self.process_single_image(src_image_path, file_type, **kwargs)
+        finally:
+            # The generated source image is copied into the output folder as input.png by the
+            # standard pipeline, so the temporary top-level copy can be removed.
+            try:
+                if os.path.exists(src_image_path):
+                    os.remove(src_image_path)
+            except Exception:
+                pass
+
+    @staticmethod
+    def _caption_to_name(caption):
+        """Builds a filesystem-safe folder/file name from a text prompt."""
+        text = (caption or "")[:40]
+        safe = "".join(c if (c.isalnum() or c in (' ', '_', '-')) else '_' for c in text).strip()
+        safe = safe.replace(' ', '_')
+        return safe or "text_prompt"
+
     def _generate_preview(self, mesh, save_folder, name):
         """Generates preview images of the 3D model"""
         try:
@@ -751,7 +1037,7 @@ class HunyuanBatchProcessor:
             'guidance_scale': self.args.guidance_scale,
             'seed': self.args.seed,
             'octree_resolution': self.args.octree_resolution,
-            'check_box_rembg': True,
+            'check_box_rembg': self.args.remove_background,
             'num_chunks': self.args.num_chunks
         }
         
@@ -803,7 +1089,7 @@ class HunyuanBatchProcessor:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Hunyuan3D-2 Processor - Generates 3D models with texture (single image or full folder)',
+        description='Hunyuan3D Processor - Compatible with Hunyuan3D-2.1 and legacy Hunyuan3D-2 setups',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Usage examples:
@@ -825,14 +1111,15 @@ Usage examples:
     
     # Main argument - can be an image or a folder
     parser.add_argument('input', 
-                       help='Single image (.jpg, .png, etc.) or folder with images')
+                       nargs='?', default=None,
+                       help='Single image or folder with images (omit for text-to-3D with --caption)')
     parser.add_argument('-o', '--output', default='output_hunyuan3d', 
                        help='Output folder (default: output_hunyuan3d)')
     
     # Model arguments (following gradio_app.py)
-    parser.add_argument("--model_path", type=str, default='tencent/Hunyuan3D-2mini')
-    parser.add_argument("--subfolder", type=str, default='hunyuan3d-dit-v2-mini-turbo')
-    parser.add_argument("--texgen_model_path", type=str, default='tencent/Hunyuan3D-2')
+    parser.add_argument("--model_path", type=str, default='tencent/Hunyuan3D-2.1')
+    parser.add_argument("--subfolder", type=str, default='hunyuan3d-dit-v2-1')
+    parser.add_argument("--texgen_model_path", type=str, default='tencent/Hunyuan3D-2.1')
     parser.add_argument('--device', type=str, default='cuda', 
                        help='Device (cuda, cpu, etc.)')
     parser.add_argument('--mc_algo', type=str, default='mc')
@@ -840,6 +1127,8 @@ Usage examples:
     # Optimizations
     parser.add_argument('--enable_t23d', action='store_true',
                        help='Enable text-to-3D')
+    parser.add_argument('--caption', type=str, default=None,
+                       help='Text prompt for text-to-3D (used together with --enable_t23d)')
     parser.add_argument('--disable_tex', action='store_true',
                        help='Disable texture generation')
     parser.add_argument('--enable_flashvdm', action='store_true',
@@ -863,28 +1152,44 @@ Usage examples:
     parser.add_argument('--file_type', type=str, default='obj', 
                        choices=['obj', 'glb', 'ply', 'stl', 'fbx'],
                        help='Output file type (obj, glb, ply, stl, fbx)')
+    parser.set_defaults(remove_background=True)
+    parser.add_argument('--remove_background', dest='remove_background', action='store_true',
+                       help='Enable internal background removal')
+    parser.add_argument('--skip_background_removal', dest='remove_background', action='store_false',
+                       help='Skip internal background removal')
     
     args = parser.parse_args()
     
-    # Determine if the input is an image or a folder
-    input_path = Path(args.input)
-    
-    if not input_path.exists():
-        print(f"Error: '{args.input}' does not exist.")
-        sys.exit(1)
-    
-    is_single_image = input_path.is_file() and is_image_file(input_path)
-    is_folder = input_path.is_dir()
-    
-    if not is_single_image and not is_folder:
-        print(f"Error: '{args.input}' is not a valid image or folder.")
-        print("Supported formats: .jpg, .jpeg, .png, .bmp, .webp, .tiff")
-        sys.exit(1)
+    # Determine the mode: text-to-3D (no positional input) or image/folder
+    text_mode = args.input is None
+    is_single_image = False
+    is_folder = False
+
+    if text_mode:
+        if not (args.enable_t23d and args.caption):
+            print("Error: no input image or folder was provided.")
+            print("Provide an image/folder, or use --enable_t23d together with --caption \"your prompt\".")
+            sys.exit(1)
+        input_path = None
+    else:
+        input_path = Path(args.input)
+
+        if not input_path.exists():
+            print(f"Error: '{args.input}' does not exist.")
+            sys.exit(1)
+
+        is_single_image = input_path.is_file() and is_image_file(input_path)
+        is_folder = input_path.is_dir()
+
+        if not is_single_image and not is_folder:
+            print(f"Error: '{args.input}' is not a valid image or folder.")
+            print("Supported formats: .jpg, .jpeg, .png, .bmp, .webp, .tiff")
+            sys.exit(1)
     
     # System checks
     if 'cuda' in args.device and not torch.cuda.is_available():
-        print("Error: CUDA is not available. Use --device cpu")
-        sys.exit(1)
+        print("Warning: CUDA is not available. Falling back to CPU.")
+        args.device = 'cpu'
     
     # FBX check
     if args.file_type.lower() == 'fbx':
@@ -897,9 +1202,12 @@ Usage examples:
             print("     Or try with other dependencies: pip install pymeshlab open3d")
     
     # Initial information
-    print("Hunyuan3D-2 Processor")
+    print("Hunyuan3D Processor")
     print("=" * 50)
-    if is_single_image:
+    if text_mode:
+        print(f"Mode: Text-to-3D")
+        print(f"Prompt: {args.caption}")
+    elif is_single_image:
         print(f"Mode: Single image")
         print(f"Input: {args.input}")
     else:
@@ -911,47 +1219,56 @@ Usage examples:
     print(f"Model: {args.model_path}/{args.subfolder}")
     print(f"Device: {args.device}")
     print(f"Texturing: {'Disabled' if args.disable_tex else 'Enabled'}")
+    print(f"Background removal: {'Enabled' if args.remove_background else 'Disabled'}")
     print(f"Low VRAM mode: {'Yes' if args.low_vram_mode else 'No'}")
     print()
     
     # Create and run processor
     processor = HunyuanBatchProcessor(args)
-    
-    if is_single_image:
-        # Process single image
-        print("Processing single image...")
-        
-        generation_params = {
-            'steps': args.steps,
-            'guidance_scale': args.guidance_scale,
-            'seed': args.seed,
-            'octree_resolution': args.octree_resolution,
-            'check_box_rembg': True,
-            'num_chunks': args.num_chunks
-        }
-        
-        success, save_folder, stats = processor.process_single_image(
-            str(input_path),
-            args.file_type,
-            **generation_params
-        )
-        
+
+    generation_params = {
+        'steps': args.steps,
+        'guidance_scale': args.guidance_scale,
+        'seed': args.seed,
+        'octree_resolution': args.octree_resolution,
+        'check_box_rembg': args.remove_background,
+        'num_chunks': args.num_chunks
+    }
+
+    if is_folder:
+        # Process a whole folder of images
+        processor.process_folder(str(input_path), args.file_type)
+    else:
+        if text_mode:
+            print("Processing text prompt (text-to-3D)...")
+            success, save_folder, stats = processor.process_single_text(
+                args.caption,
+                args.file_type,
+                **generation_params
+            )
+            error_label = f"text prompt: {args.caption}"
+        else:
+            print("Processing single image...")
+            success, save_folder, stats = processor.process_single_image(
+                str(input_path),
+                args.file_type,
+                **generation_params
+            )
+            error_label = args.input
+
         if success:
-            print(f"\n🎉 Image processed successfully!")
+            print(f"\n🎉 Generation completed successfully!")
             print(f"📁 Results saved to: {save_folder}")
             print(f"⏱️  Total time: {stats['time']['total']:.2f}s")
-            
+
             # Show generated files
             generated_files = list(Path(save_folder).glob('*'))
             print(f"\n📋 Generated files:")
             for file in sorted(generated_files):
                 print(f"   - {file.name}")
         else:
-            print(f"\n❌ Error processing the image: {args.input}")
+            print(f"\n❌ Error processing {error_label}")
             sys.exit(1)
-    else:
-        # Process folder
-        processor.process_folder(str(input_path), args.file_type)
 
 if __name__ == "__main__":
     main()

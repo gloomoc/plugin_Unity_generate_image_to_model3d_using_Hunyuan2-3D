@@ -1,3 +1,4 @@
+using System;
 using UnityEditor;
 using UnityEngine;
 
@@ -42,11 +43,23 @@ namespace Hunyuan3D.Editor
         private void OnEnable()
         {
             showOnStartup = EditorPrefs.GetBool(SHOW_ON_STARTUP_KEY, true);
-            SetupStyles();
+            titleStyle = null;
+            subtitleStyle = null;
+            stepStyle = null;
         }
         
-        private void SetupStyles()
+        private bool EnsureStyles()
         {
+            if (titleStyle != null && subtitleStyle != null && stepStyle != null)
+            {
+                return true;
+            }
+
+            if (EditorStyles.label == null)
+            {
+                return false;
+            }
+
             titleStyle = new GUIStyle(EditorStyles.label)
             {
                 fontSize = 24,
@@ -68,29 +81,56 @@ namespace Hunyuan3D.Editor
                 wordWrap = true,
                 richText = true
             };
+
+            return true;
+        }
+
+        private void RunAfterGui(Action action)
+        {
+            EditorApplication.delayCall += () =>
+            {
+                action?.Invoke();
+            };
+
+            GUIUtility.ExitGUI();
         }
         
         private void OnGUI()
         {
-            if (titleStyle == null) SetupStyles();
-            
-            scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
-            
-            DrawHeader();
-            EditorGUILayout.Space(20);
-            
-            DrawQuickStart();
-            EditorGUILayout.Space(15);
-            
-            DrawInstallationSteps();
-            EditorGUILayout.Space(15);
-            
-            DrawTroubleshooting();
-            EditorGUILayout.Space(15);
-            
-            DrawFooter();
-            
-            EditorGUILayout.EndScrollView();
+            if (!EnsureStyles())
+            {
+                EditorGUILayout.HelpBox("Unity is still initializing the editor UI. Reopen this window in a moment if needed.", MessageType.Info);
+                Repaint();
+                return;
+            }
+
+            bool scrollViewStarted = false;
+            try
+            {
+                scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
+                scrollViewStarted = true;
+
+                DrawHeader();
+                EditorGUILayout.Space(20);
+
+                DrawQuickStart();
+                EditorGUILayout.Space(15);
+
+                DrawInstallationSteps();
+                EditorGUILayout.Space(15);
+
+                DrawTroubleshooting();
+                EditorGUILayout.Space(15);
+
+                DrawFooter();
+            }
+            finally
+            {
+                if (scrollViewStarted)
+                {
+                    EditorGUILayout.EndScrollView();
+                }
+            }
         }
         
         private void DrawHeader()
@@ -132,7 +172,7 @@ namespace Hunyuan3D.Editor
                     EditorGUILayout.LabelField("   Open the automatic dependency manager:", stepStyle);
                     if (GUILayout.Button("Dependency Manager", GUILayout.Width(150)))
                     {
-                        Hunyuan3DDependencyManager.ShowWindow();
+                        RunAfterGui(() => Hunyuan3DDependencyManager.ShowWindow());
                     }
                 }
                 
@@ -149,7 +189,7 @@ namespace Hunyuan3D.Editor
                     EditorGUILayout.LabelField("   Open the main generator:", stepStyle);
                     if (GUILayout.Button("3D Model Generator", GUILayout.Width(150)))
                     {
-                        Hunyuan3DGenerator.ShowWindow();
+                        RunAfterGui(() => Hunyuan3DGenerator.ShowWindow());
                     }
                 }
             }
@@ -253,7 +293,7 @@ namespace Hunyuan3D.Editor
                 
                 if (GUILayout.Button("Close", GUILayout.Width(80)))
                 {
-                    Close();
+                    RunAfterGui(() => Close());
                 }
             }
             
